@@ -1,0 +1,17 @@
+{
+  "MizuMaiNichi": {
+    "projectTitle": "MizuMaiNichi",
+    "projectDescription": "Workflow application for scrobbling music recommendation based of my recent listenging history, playlists, and specific genre choices.  Built for the purpose of discovering new artists to share of my music pages.",
+    "projectTags": ["NextJs", "MongoDB", "python"],
+    "projectLink": "https://github.com/bmaurice98/mizumainichilogger",
+    "projectImageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuCPzNKloOOd58mKsO7wSm1phLyTKdGExTeu4wfewzlTGL_-_K3MeuuwE5Fa47loZ7pJf64NUUhwJXeICeXbOdrMPbMHabd6q5Xy4BjtUcZv9-V25OUwMvKNRQadxwt8XlFjae7xIDfuBOut4-ER3bht46Po1vHALYWTLy2LLAg-iBZKtegJfyymzX_XjxiuGSqTRrbanuRfST1X3ss-sQ4IJDXzw7soJ61nTB8XRIxJ1J-gE4AMcdGvp7SdejKRSdQNT9kyLUtlsw"
+  },
+  "MizuMaiNichi2": {
+    "projectTitle": "DJ Together",
+    "projectDescription": "DJ Together is a webapp integrated with the spotify api, allowing users to access and modify the playback of other spotify users. The inspiration of this app is related to the discord functionality that lets users listen along with to someone else's current playback.",
+    "projectTags": ["NextJs", "PostgreSQL", "python", "SpotifyWebApi"],
+    "projectLink": "http://spotify-group-queue.vercel.app/",
+    "projectImageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBWTKh7J174C-VJwYKdAohcVRGD0flMAccjaMQ5lVHE-3C_LFDCNeGoh2VFP3heiNK-OOVSdW5H9jXM_XMA40Ys8LG7fb4TEBNDf99KpgC8JnuMUPRBoAr2ThsZKPRbVMHexCacrIlwlFHOnThX0Sld3Qt0aIz57asFxn1ihp4-jwRE_4h-ndiv3tHQhvMN3ib22-CUsQl_XBWULzSKnxS1bVi7k7j1FrAi8u-SusePlFWD-PCx8bRf8eY5jjl_ODJ6W-0tSNaFRg",
+    "githubLink": "https://github.com/bmaurice98/SpotifyGroupQueue"
+  }
+}
