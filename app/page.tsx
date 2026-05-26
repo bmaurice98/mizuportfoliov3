@@ -22,7 +22,7 @@ export default function Home() {
         <TechDisplay />
       </main>
       {/* // <!-- Footer Component --> */}
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

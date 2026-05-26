@@ -17,7 +17,11 @@ export default function Footer() {
               className="text-outline hover:text-primary transition-colors hover:opacity-80 hover:underline decoration-secondary"
               href="https://github.com/bmaurice98"
             >
-              Github
+              <img
+                alt="GitHub"
+                className="w-6 h-6 invert"
+                src="https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/github.svg"
+              />
             </Link>
           </li>
           <li>
@@ -25,7 +29,11 @@ export default function Footer() {
               className="text-outline hover:text-primary transition-colors hover:opacity-80 hover:underline decoration-secondary"
               href="https://www.linkedin.com/in/bmaurice98/"
             >
-              LinkedIn
+              <img
+                alt="LinkedIn"
+                className="w-6 h-6 invert"
+                src="https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/linkedin.svg"
+              />
             </Link>
           </li>
           <li>
@@ -33,7 +41,11 @@ export default function Footer() {
               className="text-outline hover:text-primary transition-colors hover:opacity-80 hover:underline decoration-secondary"
               href="https://leetcode.com/u/MizuPiku/"
             >
-              Leetcode
+              <img
+                alt="LeetCode"
+                className="w-6 h-6 invert"
+                src="https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/leetcode.svg"
+              />
             </Link>
           </li>
           <li>
@@ -41,7 +53,11 @@ export default function Footer() {
               className="text-outline hover:text-primary transition-colors hover:opacity-80 hover:underline decoration-secondary"
               href="https://open.spotify.com/user/bmaurice100"
             >
-              Spotify
+              <img
+                alt="Spotify"
+                className="w-6 h-6 invert"
+                src="https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/spotify.svg"
+              />
             </Link>
           </li>
         </ul>

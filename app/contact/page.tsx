@@ -17,7 +17,7 @@ function page() {
           <ContactForm />
         </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }

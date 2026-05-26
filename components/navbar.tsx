@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
+import MobileNavbar from "./mobileNavbar";
+
 
 const navLinks = {
   Home: "/",
@@ -17,6 +19,16 @@ const inactiveLinkStyle =
 export default function Navbar() {
   const pathname = usePathname();
   // console.log(pathname);
+
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+  const handleMenuOpen = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleMenuClose = () => {
+    setIsMenuOpen(false);
+  };
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/3 dark:bg-white/3 backdrop-blur-[50px] border-b border-white/10 shadow-[0_0_20px_rgba(224,247,250,0.05)]">
@@ -84,12 +96,15 @@ export default function Navbar() {
           </button>
         </Link>
         {/* <!-- Mobile Menu Icon (Visual only) --> */}
-        <button className="md:hidden text-primary p-2">
+        <button className="md:hidden text-primary p-2" onClick={handleMenuOpen}>
           <span className="material-symbols-outlined" data-icon="menu">
             menu
           </span>
         </button>
       </div>
+      {/* <!-- Mobile Menu (Hidden by default) --> */}
+      {/* <!-- When the menu is open, the mobile nav will display over the full screen --> */}
+      {isMenuOpen && <MobileNavbar handleMenuClose={handleMenuClose} />}
     </nav>
   );
 }

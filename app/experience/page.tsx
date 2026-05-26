@@ -17,7 +17,7 @@ function page() {
         <ExperienceTechStackSection />
         </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }
