@@ -10,7 +10,12 @@ export default function ContactForm() {
   return (
     <div className="lg:col-span-7">
       <div className="bg-white/3 backdrop-blur-[32px] border border-white/10 border-t-white/20 border-l-white/20 rounded-xl p-8 md:p-12">
-        <form action={createInquiry} className="flex flex-col gap-8">
+        <form
+          action={async (formData: FormData) => {
+            await createInquiry(formData);
+          }}
+          className="flex flex-col gap-8"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* <!-- Name Input --> */}
             <div className="flex flex-col gap-2 relative group">
