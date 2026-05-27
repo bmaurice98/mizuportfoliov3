@@ -15,16 +15,16 @@ const InquiriesCard = ({ name, email, subject, message }: Props) => {
 
       <div className="p-6 flex flex-col grow z-10">
         <h3 className="font-headline-sm text-headline-sm text-primary mb-2">
-          {name}
+          {name || ""}
         </h3>
         <h3 className="font-headline-sm text-headline-sm text-primary mb-2">
-          {email}
+          {email || ""}
         </h3>
         <h3 className="font-headline-sm text-headline-sm text-primary mb-2">
-          {subject}
+          {subject || ""}
         </h3>
         <p className="font-body-md text-body-md text-on-surface-variant mb-6 grow">
-          {message}
+          {message || ""}
         </p>
       </div>
     </article>
