@@ -12,12 +12,52 @@ export function CursorLayer() {
   const pathname = usePathname();
   const lastSent = useRef(0);
 
+  const [docSize, setDocSize] = useState({ w: 0, h: 0 });
+
+  useEffect(() => {
+    function measure() {
+      setDocSize({
+        w: document.documentElement.scrollWidth,
+        h: document.documentElement.scrollHeight,
+      });
+    }
+    measure();
+
+    // Re-measure on window resize AND on content size changes
+    // (images loading, dynamic content expanding the page, etc).
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.documentElement);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [pathname]); // re-measure on route change since content differs per page
+
+  // Track this viewer's own viewport size so we can convert
+  // received fractions back into real pixel positions on THIS screen.
+  // const [viewport, setViewport] = useState({ w: 0, h: 0 });
+  // useEffect(() => {
+  //   function updateViewport() {
+  //     setViewport({ w: window.innerWidth, h: window.innerHeight });
+  //   }
+  //   updateViewport();
+  //   window.addEventListener("resize", updateViewport);
+  //   return () => window.removeEventListener("resize", updateViewport);
+  // }, []);
+
   useEffect(() => {
     function handleMove(e: MouseEvent) {
       const now = performance.now();
       if (now - lastSent.current < 40) return;
       lastSent.current = now;
-      updateCursor({ x: e.clientX, y: e.clientY, page: pathname });
+
+      const docW = document.documentElement.scrollWidth;
+      const docH = document.documentElement.scrollHeight;
+      // pageX/pageY already include scroll offset, unlike clientX/clientY.
+      const normX = Math.min(1, Math.max(0, e.pageX / docW));
+      const normY = Math.min(1, Math.max(0, e.pageY / docH));
+      updateCursor({ x: normX, y: normY, page: pathname });
     }
     window.addEventListener("mousemove", handleMove);
     return () => window.removeEventListener("mousemove", handleMove);
@@ -29,7 +69,7 @@ export function CursorLayer() {
     return () => clearInterval(id);
   }, []);
 
-  if (!isReady || !conn) return null;
+  if (!isReady || !conn || docSize.w === 0) return null;
 
   const IDLE_MS = 5_000;
 
@@ -37,13 +77,7 @@ export function CursorLayer() {
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        pointerEvents: "none",
-        zIndex: 9999,
-        overflow: "hidden",
-      }}
+      className={`fixed inset-0 w-[${docSize.w}px] h-[${docSize.h}px] pointer-events-none z-9999 overflow-hidden`}
     >
       {cursors
         .filter((c) => {
@@ -57,8 +91,8 @@ export function CursorLayer() {
             key={c.identity.toHexString()}
             style={{
               position: "absolute",
-              left: c.x,
-              top: c.y,
+              left: c.x * docSize.w,
+              top: c.y * docSize.h,
               transition: "left 80ms linear, top 80ms linear",
               willChange: "left, top",
             }}

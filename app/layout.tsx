@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { Providers } from "./providers";
 import { CursorLayer } from "./CursorLayer";
+import { NameGate } from "./NameGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +53,7 @@ export default function RootLayout({
 
       <body className="bg-background text-on-background font-body-md text-body-md min-h-screen relative overflow-x-hidden selection:bg-secondary-container selection:text-primary pt-20">
         <Providers>
+          <NameGate />
           <CursorLayer />
           {children}
           <Footer />
