@@ -65,7 +65,7 @@ function nameFor(identity: { toHexString(): string }) {
   return `${ADJECTIVES[h % ADJECTIVES.length]} ${ANIMALS[(h >> 4) % ANIMALS.length]}`;
 }
 
-spacetimedb.clientDisconnected((ctx: ReducerCtx) => {
+spacetimedb.clientDisconnected((ctx) => {
   if (ctx.db.cursor.identity.find(ctx.sender)) {
     ctx.db.cursor.identity.delete(ctx.sender);
   }
@@ -73,7 +73,7 @@ spacetimedb.clientDisconnected((ctx: ReducerCtx) => {
 
 export const updateCursor = spacetimedb.reducer(
   { x: t.f32(), y: t.f32(), page: t.string() },
-  (ctx: ReducerCtx, { x, y, page }: { x: number; y: number; page: string }) => {
+  (ctx, { x, y, page }: { x: number; y: number; page: string }) => {
     const existing = ctx.db.cursor.identity.find(ctx.sender);
     const row = {
       identity: ctx.sender,
