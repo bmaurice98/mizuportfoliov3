@@ -1,0 +1,5 @@
+# spacetimedb/spacetime.toml
+plugin_type = "typescript"
+
+[project]
+name = "mizuportfoliov3"
