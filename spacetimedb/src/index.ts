@@ -1,5 +1,7 @@
 import { schema, table, t } from "spacetimedb/server";
 import { ScheduleAt } from "spacetimedb";
+import { SenderError } from "spacetimedb/server";
+import { Filter } from "bad-words";
 
 const cursor = table(
   { name: "cursor", public: true },
@@ -45,6 +47,41 @@ export const sweep_idle_cursors = spacetimedb.reducer(
     }
     for (const identity of stale) {
       ctx.db.cursor.identity.delete(identity);
+    }
+  },
+);
+
+const profanity = new Filter();
+const NAME_PATTERN = /^[a-zA-Z0-9 _'-]{2,20}$/;
+
+export const setCursorName = spacetimedb.reducer(
+  { name: t.string() },
+  (ctx, { name }) => {
+    const cleaned = name.trim();
+
+    if (!NAME_PATTERN.test(cleaned)) {
+      throw new SenderError(
+        "Name must be 2-20 characters (letters, numbers, spaces, - or _ only).",
+      );
+    }
+    if (profanity.isProfane(cleaned)) {
+      throw new SenderError("That name isn't allowed — please choose another.");
+    }
+
+    const existing = ctx.db.cursor.identity.find(ctx.sender);
+    const row = {
+      identity: ctx.sender,
+      x: existing?.x ?? 0,
+      y: existing?.y ?? 0,
+      page: existing?.page ?? "",
+      color: existing?.color ?? colorFor(ctx.sender),
+      name: cleaned === "random" ? nameFor(ctx.sender) : cleaned,
+      updatedAt: ctx.timestamp,
+    };
+    if (existing) {
+      ctx.db.cursor.identity.update(row);
+    } else {
+      ctx.db.cursor.insert(row);
     }
   },
 );
