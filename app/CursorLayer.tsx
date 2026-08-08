@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { tables, reducers } from "../src/module_bindings";
 import { useTable, useReducer, useSpacetimeDB } from "spacetimedb/react";
@@ -23,7 +23,15 @@ export function CursorLayer() {
     return () => window.removeEventListener("mousemove", handleMove);
   }, [pathname, updateCursor]);
 
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   if (!isReady || !conn) return null;
+
+  const IDLE_MS = 5_000;
 
   const myIdentity = conn.identity?.toHexString();
 
@@ -38,9 +46,12 @@ export function CursorLayer() {
       }}
     >
       {cursors
-        .filter(
-          (c) => c.page === pathname && c.identity.toHexString() !== myIdentity,
-        )
+        .filter((c) => {
+          if (c.page !== pathname || c.identity.toHexString() === myIdentity)
+            return false;
+          const updatedMs = Number(c.updatedAt.microsSinceUnixEpoch) / 1000;
+          return now - updatedMs < IDLE_MS;
+        })
         .map((c) => (
           <div
             key={c.identity.toHexString()}

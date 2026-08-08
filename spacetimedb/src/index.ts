@@ -1,5 +1,5 @@
 import { schema, table, t } from "spacetimedb/server";
-import type { ReducerCtx } from "spacetimedb/server";
+import { ScheduleAt } from "spacetimedb";
 
 const cursor = table(
   { name: "cursor", public: true },
@@ -14,8 +14,40 @@ const cursor = table(
   },
 );
 
-const spacetimedb = schema({ cursor });
+const sweepCursorJob = table(
+  { name: "sweep_cursor_job", public: false, schedule: "sweep_idle_cursors" },
+  {
+    scheduleId: t.identity().primaryKey(),
+    scheduledAt: t.scheduleAt(),
+  },
+);
+
+const spacetimedb = schema({ cursor, sweepCursorJob });
 export default spacetimedb;
+
+const IDLE_TIMEOUT_MICROS = 15_000_000n; // 15s idle → removed
+const SWEEP_INTERVAL_MICROS = 5_000_000n; // check every 5s
+
+export const init = spacetimedb.init((ctx) => {
+  ctx.db.sweepCursorJob.insert({
+    scheduleId: 0n,
+    scheduledAt: ScheduleAt.interval(SWEEP_INTERVAL_MICROS),
+  });
+});
+
+export const sweep_idle_cursors = spacetimedb.reducer(
+  { arg: sweepCursorJob.rowType },
+  (ctx, { arg }) => {
+    const cutoff = ctx.timestamp.microsSinceUnixEpoch - IDLE_TIMEOUT_MICROS;
+    const stale: any[] = [];
+    for (const row of ctx.db.cursor.iter()) {
+      if (row.updatedAt.microsSinceUnixEpoch < cutoff) stale.push(row.identity);
+    }
+    for (const identity of stale) {
+      ctx.db.cursor.identity.delete(identity);
+    }
+  },
+);
 
 const COLORS = [
   "#ef4444",
