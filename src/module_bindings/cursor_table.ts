@@ -16,5 +16,6 @@ export default __t.row({
   y: __t.f32(),
   page: __t.string(),
   color: __t.string(),
+  name: __t.string(),
   updatedAt: __t.timestamp().name("updated_at"),
 });

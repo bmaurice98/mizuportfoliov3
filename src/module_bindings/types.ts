@@ -16,6 +16,7 @@ export const Cursor = __t.object("Cursor", {
   y: __t.f32(),
   page: __t.string(),
   color: __t.string(),
+  name: __t.string(),
   updatedAt: __t.timestamp(),
 });
 export type Cursor = __Infer<typeof Cursor>;

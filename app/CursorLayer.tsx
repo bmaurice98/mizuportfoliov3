@@ -7,7 +7,7 @@ import { useTable, useReducer, useSpacetimeDB } from "spacetimedb/react";
 
 export function CursorLayer() {
   const conn = useSpacetimeDB();
-  const [cursors, isLoading] = useTable(tables.cursor);
+  const [cursors, isReady] = useTable(tables.cursor);
   const updateCursor = useReducer(reducers.updateCursor);
   const pathname = usePathname();
   const lastSent = useRef(0);
@@ -15,7 +15,7 @@ export function CursorLayer() {
   useEffect(() => {
     function handleMove(e: MouseEvent) {
       const now = performance.now();
-      if (now - lastSent.current < 40) return; // cap at ~25 updates/sec
+      if (now - lastSent.current < 40) return;
       lastSent.current = now;
       updateCursor({ x: e.clientX, y: e.clientY, page: pathname });
     }
@@ -23,9 +23,9 @@ export function CursorLayer() {
     return () => window.removeEventListener("mousemove", handleMove);
   }, [pathname, updateCursor]);
 
-  if (isLoading || !conn) return null;
+  if (!isReady || !conn) return null;
 
-  const myIdentity = conn.identity?.toHexString() || "";
+  const myIdentity = conn.identity?.toHexString();
 
   return (
     <div
@@ -60,6 +60,22 @@ export function CursorLayer() {
                 strokeWidth="1"
               />
             </svg>
+            <span
+              style={{
+                position: "absolute",
+                left: 18,
+                top: 14,
+                whiteSpace: "nowrap",
+                fontSize: 11,
+                fontWeight: 600,
+                color: "white",
+                background: c.color,
+                padding: "2px 6px",
+                borderRadius: 4,
+              }}
+            >
+              {c.name}
+            </span>
           </div>
         ))}
     </div>
