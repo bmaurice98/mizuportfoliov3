@@ -77,7 +77,7 @@ export function CursorLayer() {
 
   return (
     <div
-      className={`fixed inset-0 w-[${docSize.w}px] h-[${docSize.h}px] pointer-events-none z-9999 overflow-hidden`}
+      className={`absolute inset-0 w-[${docSize.w}px] h-[${docSize.h}px] pointer-events-none z-9999 overflow-hidden`}
     >
       {cursors
         .filter((c) => {
