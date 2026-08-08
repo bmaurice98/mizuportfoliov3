@@ -52,9 +52,9 @@ export default function RootLayout({
 
       <body className="bg-background text-on-background font-body-md text-body-md min-h-screen relative overflow-x-hidden selection:bg-secondary-container selection:text-primary pt-20">
         <Providers>
+          <CursorLayer />
           {children}
           <Footer />
-          <CursorLayer />
         </Providers>
       </body>
     </html>

@@ -1,4 +1,5 @@
 import { schema, table, t } from "spacetimedb/server";
+import type { ReducerCtx } from "spacetimedb/server";
 
 const cursor = table(
   { name: "cursor", public: true },
@@ -8,6 +9,7 @@ const cursor = table(
     y: t.f32(),
     page: t.string(),
     color: t.string(),
+    name: t.string(),
     updatedAt: t.timestamp(),
   },
 );
@@ -25,13 +27,42 @@ const COLORS = [
   "#8b5cf6",
   "#ec4899",
 ];
+const ADJECTIVES = [
+  "Curious",
+  "Sneaky",
+  "Cosmic",
+  "Quiet",
+  "Swift",
+  "Lucky",
+  "Bold",
+  "Gentle",
+];
+const ANIMALS = [
+  "Otter",
+  "Panda",
+  "Falcon",
+  "Fox",
+  "Koala",
+  "Lynx",
+  "Heron",
+  "Wren",
+];
 
-function colorFor(identity: { toHexString(): string }) {
+function hashOf(identity: { toHexString(): string }) {
   const hex = identity.toHexString();
   let hash = 0;
   for (let i = 0; i < hex.length; i++)
     hash = (hash * 31 + hex.charCodeAt(i)) >>> 0;
-  return COLORS[hash % COLORS.length];
+  return hash;
+}
+
+function colorFor(identity: { toHexString(): string }) {
+  return COLORS[hashOf(identity) % COLORS.length];
+}
+
+function nameFor(identity: { toHexString(): string }) {
+  const h = hashOf(identity);
+  return `${ADJECTIVES[h % ADJECTIVES.length]} ${ANIMALS[(h >> 4) % ANIMALS.length]}`;
 }
 
 spacetimedb.clientDisconnected((ctx) => {
@@ -42,7 +73,7 @@ spacetimedb.clientDisconnected((ctx) => {
 
 export const updateCursor = spacetimedb.reducer(
   { x: t.f32(), y: t.f32(), page: t.string() },
-  (ctx, { x, y, page }) => {
+  (ctx, { x, y, page }: { x: number; y: number; page: string }) => {
     const existing = ctx.db.cursor.identity.find(ctx.sender);
     const row = {
       identity: ctx.sender,
@@ -50,6 +81,7 @@ export const updateCursor = spacetimedb.reducer(
       y,
       page,
       color: existing?.color ?? colorFor(ctx.sender),
+      name: existing?.name ?? nameFor(ctx.sender),
       updatedAt: ctx.timestamp,
     };
     if (existing) {
