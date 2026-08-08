@@ -17,7 +17,7 @@ const cursor = table(
 const sweepCursorJob = table(
   { name: "sweep_cursor_job", public: false, schedule: "sweep_idle_cursors" },
   {
-    scheduleId: t.identity().primaryKey(),
+    scheduleId: t.u64().primaryKey().autoInc(),
     scheduledAt: t.scheduleAt(),
   },
 );
