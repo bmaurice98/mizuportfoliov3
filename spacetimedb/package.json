@@ -1,0 +1,16 @@
+{
+  "name": "mizuportfoliov3",
+  "version": "0.1.0",
+  "description": "SpacetimeDB TypeScript backend server module",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "spacetimedb-compiler build src/index.ts"
+  },
+  "dependencies": {
+    "spacetimedb": "^1.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
