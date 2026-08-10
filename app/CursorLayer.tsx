@@ -103,6 +103,7 @@ export function CursorLayer() {
                 fill={c.color}
                 stroke="white"
                 strokeWidth="1"
+                opacity="0.5"
               />
             </svg>
             <span
@@ -117,6 +118,8 @@ export function CursorLayer() {
                 background: c.color,
                 padding: "2px 6px",
                 borderRadius: 4,
+                opacity: 0.4,
+                boxShadow: "0 0 2px rgba(0,0,0,0.5)",
               }}
             >
               {c.name}

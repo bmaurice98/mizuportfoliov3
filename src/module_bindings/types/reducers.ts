@@ -7,10 +7,8 @@ import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
 import SetCursorNameReducer from "../set_cursor_name_reducer";
-import SweepIdleCursorsReducer from "../sweep_idle_cursors_reducer";
 import UpdateCursorReducer from "../update_cursor_reducer";
 
 export type SetCursorNameParams = __Infer<typeof SetCursorNameReducer>;
-export type SweepIdleCursorsParams = __Infer<typeof SweepIdleCursorsReducer>;
 export type UpdateCursorParams = __Infer<typeof UpdateCursorReducer>;
 

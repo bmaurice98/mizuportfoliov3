@@ -21,9 +21,9 @@ export const Cursor = __t.object("Cursor", {
 });
 export type Cursor = __Infer<typeof Cursor>;
 
-export const SweepCursorJob = __t.object("SweepCursorJob", {
+export const Sweep = __t.object("Sweep", {
   scheduleId: __t.u64(),
   scheduledAt: __t.scheduleAt(),
 });
-export type SweepCursorJob = __Infer<typeof SweepCursorJob>;
+export type Sweep = __Infer<typeof Sweep>;
 

@@ -16,35 +16,38 @@ const cursor = table(
   },
 );
 
-const sweepCursorJob = table(
-  { name: "sweep_cursor_job", public: false, schedule: "sweep_idle_cursors" },
+const sweep = table(
+  { name: "sweep", scheduled: (): any => sweep_idle_cursors },
   {
-    scheduleId: t.u64().primaryKey().autoInc(),
-    scheduledAt: t.scheduleAt(),
+    schedule_id: t.u64().primaryKey().autoInc(),
+    scheduled_at: t.scheduleAt(),
   },
 );
 
-const spacetimedb = schema({ cursor, sweepCursorJob });
+const spacetimedb = schema({ cursor, sweep });
 export default spacetimedb;
 
 const IDLE_TIMEOUT_MICROS = 15_000_000n; // 15s idle → removed
-const SWEEP_INTERVAL_MICROS = 5_000_000n; // check every 5s
+const SWEEP_INTERVAL_MICROS = 500_000_000n; // check every 8m 20s
 
 export const init = spacetimedb.init((ctx) => {
-  ctx.db.sweepCursorJob.insert({
-    scheduleId: 0n,
-    scheduledAt: ScheduleAt.interval(SWEEP_INTERVAL_MICROS),
+  console.log("SpacetimeDB initialized --- IGNORE ---");
+  ctx.db.sweep.insert({
+    schedule_id: 0n,
+    scheduled_at: ScheduleAt.interval(SWEEP_INTERVAL_MICROS),
   });
 });
 
 export const sweep_idle_cursors = spacetimedb.reducer(
-  { arg: sweepCursorJob.rowType },
+  { arg: sweep.rowType },
   (ctx, { arg }) => {
     const cutoff = ctx.timestamp.microsSinceUnixEpoch - IDLE_TIMEOUT_MICROS;
     const stale: any[] = [];
+    console.log("Checking Idle Cursors");
     for (const row of ctx.db.cursor.iter()) {
       if (row.updatedAt.microsSinceUnixEpoch < cutoff) stale.push(row.identity);
     }
+    console.log(`Total Idle Cursors: ${stale.length}`);
     for (const identity of stale) {
       ctx.db.cursor.identity.delete(identity);
     }
