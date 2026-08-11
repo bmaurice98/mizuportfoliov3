@@ -11,6 +11,8 @@ export function CursorLayer() {
   const updateCursor = useReducer(reducers.updateCursor);
   const pathname = usePathname();
   const lastSent = useRef(0);
+  const [games] = useTable(tables.hotPotatoGame);
+  const game = games[0];
 
   const [docSize, setDocSize] = useState({ w: 0, h: 0 });
 
@@ -86,46 +88,67 @@ export function CursorLayer() {
           const updatedMs = Number(c.updatedAt.microsSinceUnixEpoch) / 1000;
           return now - updatedMs < IDLE_MS;
         })
-        .map((c) => (
-          <div
-            key={c.identity.toHexString()}
-            style={{
-              position: "absolute",
-              left: c.x * docSize.w,
-              top: c.y * docSize.h,
-              transition: "left 80ms linear, top 80ms linear",
-              willChange: "left, top",
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20">
-              <path
-                d="M2 2L18 9L11 11L9 18L2 2Z"
-                fill={c.color}
-                stroke="white"
-                strokeWidth="1"
-                opacity="0.5"
-              />
-            </svg>
-            <span
+        .map((c) => {
+          const isHolder =
+            game?.status === "active" &&
+            game.bombHolder?.toHexString() === c.identity.toHexString();
+
+          return (
+            <div
+              key={c.identity.toHexString()}
+
               style={{
                 position: "absolute",
-                left: 18,
-                top: 14,
-                whiteSpace: "nowrap",
-                fontSize: 11,
-                fontWeight: 600,
-                color: "white",
-                background: c.color,
-                padding: "2px 6px",
-                borderRadius: 4,
-                opacity: 0.4,
-                boxShadow: "0 0 2px rgba(0,0,0,0.5)",
+                left: c.x * docSize.w,
+                top: c.y * docSize.h,
+                transition: "left 80ms linear, top 80ms linear",
+                willChange: "left, top",
               }}
             >
-              {c.name}
-            </span>
-          </div>
-        ))}
+              {isHolder ? (
+                <div
+                  key={c.identity.toHexString()}
+                  style={{
+                    fontSize: 22,
+                    filter: "drop-shadow(0 0 6px #ef4444)",
+                  }}
+                >
+                  💣
+                </div>
+              ) : (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 20 20">
+                    <path
+                      d="M2 2L18 9L11 11L9 18L2 2Z"
+                      fill={c.color}
+                      stroke="white"
+                      strokeWidth="1"
+                      opacity="0.5"
+                    />
+                  </svg>
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: 18,
+                      top: 14,
+                      whiteSpace: "nowrap",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "white",
+                      background: c.color,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      opacity: 0.4,
+                      boxShadow: "0 0 2px rgba(0,0,0,0.5)",
+                    }}
+                  >
+                    {c.name}
+                  </span>
+                </>
+              )}
+            </div>
+          );
+        })}
     </div>
   );
 }
