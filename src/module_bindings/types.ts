@@ -21,6 +21,27 @@ export const Cursor = __t.object("Cursor", {
 });
 export type Cursor = __Infer<typeof Cursor>;
 
+export const ExplosionJob = __t.object("ExplosionJob", {
+  scheduledId: __t.u64(),
+  scheduledAt: __t.scheduleAt(),
+  roundId: __t.u64(),
+});
+export type ExplosionJob = __Infer<typeof ExplosionJob>;
+
+export const HotPotatoGame = __t.object("HotPotatoGame", {
+  id: __t.u64(),
+  status: __t.string(),
+  roundId: __t.u64(),
+  bombHolder: __t.option(__t.identity()),
+  bombHolderSince: __t.u64(),
+  startedAtMicros: __t.u64(),
+  endsAtMicros: __t.u64(),
+  durationSeconds: __t.u32(),
+  loserIdentity: __t.option(__t.identity()),
+  loserName: __t.option(__t.string()),
+});
+export type HotPotatoGame = __Infer<typeof HotPotatoGame>;
+
 export const Sweep = __t.object("Sweep", {
   scheduleId: __t.u64(),
   scheduledAt: __t.scheduleAt(),

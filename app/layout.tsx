@@ -6,6 +6,7 @@ import Footer from "@/components/footer";
 import { Providers } from "./providers";
 import { CursorLayer } from "./CursorLayer";
 import { NameGate } from "./NameGate";
+import { GameHUD } from "@/components/ui/GameHUD";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,6 +57,7 @@ export default function RootLayout({
           <NameGate />
           <CursorLayer />
           {children}
+          <GameHUD />
           <Footer />
         </Providers>
       </body>
