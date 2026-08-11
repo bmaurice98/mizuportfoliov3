@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { tables, reducers } from "../../src/module_bindings";
 import { useTable, useReducer, useSpacetimeDB } from "spacetimedb/react";
+import { playExplosion, playWinChime } from "../gameAudio";
 
 const DEFAULT_DURATION = 30;
 const LOSER_BANNER_MS = 5000;
@@ -26,6 +27,7 @@ export function GameHUD() {
   }, []);
 
   const game = games[0];
+  const myIdentity = conn?.identity?.toHexString();
 
   // Show the loser banner for a few seconds whenever a round freshly ends,
   // then auto-hide — keyed on roundId so a *new* ended round re-triggers it.
@@ -48,9 +50,31 @@ export function GameHUD() {
     return () => clearTimeout(timeout);
   }, [error]);
 
+  // Play explosion/win sounds only on an ACTIVE→ENDED transition observed
+  // locally — this guards against playing a sound the instant someone loads
+  // the page and finds a round that already ended before they arrived.
+  const prevStatusRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const prevStatus = prevStatusRef.current;
+    prevStatusRef.current = game?.status;
+
+    if (
+      prevStatus === "active" &&
+      game?.status === "ended" &&
+      game.loserIdentity &&
+      myIdentity
+    ) {
+      const iAmLoser = game.loserIdentity.toHexString() === myIdentity;
+      if (iAmLoser) {
+        playExplosion();
+      } else {
+        playWinChime();
+      }
+    }
+  }, [game?.status, game?.roundId, game?.loserIdentity, myIdentity]);
+
   if (!conn) return null;
 
-  const myIdentity = conn.identity?.toHexString();
   const isActive = game?.status === "active";
   const iAmHolder = isActive && game?.bombHolder?.toHexString() === myIdentity;
   const secondsLeft = isActive

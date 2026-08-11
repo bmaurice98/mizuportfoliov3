@@ -58,7 +58,7 @@ const spacetimedb = schema({
 export default spacetimedb;
 
 const IDLE_TIMEOUT_MICROS = 15_000_000n; // 15s idle → removed
-const SWEEP_INTERVAL_MICROS = 5_000_000n; // check every 8m 20s
+const SWEEP_INTERVAL_MICROS = 600_000_000n; // check every 8m 20s
 
 export const init = spacetimedb.init((ctx) => {
   console.log("SpacetimeDB Sweeper Initialized --- IGNORE ---");
@@ -273,8 +273,6 @@ export const startHotPotato = spacetimedb.reducer(
     // Defensive check just to be absolutely safe
     if (!bombHolderRow) {
       throw new SenderError("No active player selected");
-    } else {
-      console.log(typeof bombHolderRow.identity);
     }
 
     const row = {
@@ -289,7 +287,7 @@ export const startHotPotato = spacetimedb.reducer(
       loserIdentity: undefined,
       loserName: undefined,
     };
-    console.log(row);
+    // console.log(row);
 
     if (existing) {
       ctx.db.hotPotatoGame.id.update(row);
