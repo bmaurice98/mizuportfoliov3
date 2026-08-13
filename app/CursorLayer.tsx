@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { tables, reducers } from "../src/module_bindings";
 import { useTable, useReducer, useSpacetimeDB } from "spacetimedb/react";
@@ -9,6 +9,7 @@ export function CursorLayer() {
   const conn = useSpacetimeDB();
   const [cursors, isReady] = useTable(tables.cursor);
   const updateCursor = useReducer(reducers.updateCursor);
+  const [readyPlayers] = useTable(tables.readyPlayer);
   const pathname = usePathname();
   const lastSent = useRef(0);
   const [games] = useTable(tables.hotPotatoGame);
@@ -71,6 +72,20 @@ export function CursorLayer() {
     return () => clearInterval(id);
   }, []);
 
+  // Who's actually opted into the current lobby/round — only relevant
+  // while a round is forming or live; readyPlayer rows are cleared once
+  // it ends, so this naturally empties out again after the round.
+  const participantIds = useMemo(() => {
+    if (!game || (game.status !== "lobby" && game.status !== "active")) {
+      return new Set<string>();
+    }
+    return new Set(
+      readyPlayers
+        .filter((r) => r.roundId === game.roundId)
+        .map((r) => r.identity.toHexString()),
+    );
+  }, [readyPlayers, game?.status, game?.roundId]);
+
   if (!isReady || !conn || docSize.w === 0) return null;
 
   const IDLE_MS = 5_000;
@@ -92,6 +107,8 @@ export function CursorLayer() {
           const isHolder =
             game?.status === "active" &&
             game.bombHolder?.toHexString() === c.identity.toHexString();
+          const isParticipant = participantIds.has(c.identity.toHexString());
+          const dimmedOpacity = isParticipant ? 1 : 0.4;
 
           return (
             <div
@@ -117,13 +134,17 @@ export function CursorLayer() {
                 </div>
               ) : (
                 <>
-                  <svg width="20" height="20" viewBox="0 0 20 20">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    opacity={dimmedOpacity}
+                  >
                     <path
                       d="M2 2L18 9L11 11L9 18L2 2Z"
                       fill={c.color}
                       stroke="white"
                       strokeWidth="1"
-                      opacity="0.5"
                     />
                   </svg>
                   <span
@@ -138,7 +159,7 @@ export function CursorLayer() {
                       background: c.color,
                       padding: "2px 6px",
                       borderRadius: 4,
-                      opacity: 0.4,
+                      opacity: dimmedOpacity,
                       boxShadow: "0 0 2px rgba(0,0,0,0.5)",
                     }}
                   >

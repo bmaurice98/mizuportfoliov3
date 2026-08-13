@@ -23,6 +23,8 @@ export function NameGate() {
   useEffect(() => {
     if (!conn) return;
     const stored = loadStoredName();
+    console.log(stored);
+
     if (stored) {
       setCursorName({ name: stored }).catch(() => {
         localStorage.removeItem(STORAGE_KEY);
@@ -31,7 +33,7 @@ export function NameGate() {
     } else {
       setOpen(true);
     }
-  }, [conn]);
+  }, [conn, setCursorName]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
