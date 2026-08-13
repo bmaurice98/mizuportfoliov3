@@ -34,6 +34,7 @@ import {
 } from "spacetimedb";
 
 // Import all reducer arg schemas
+import ReadyUpReducer from "./ready_up_reducer";
 import SetCursorNameReducer from "./set_cursor_name_reducer";
 import StartHotPotatoReducer from "./start_hot_potato_reducer";
 import UpdateCursorReducer from "./update_cursor_reducer";
@@ -43,6 +44,7 @@ import UpdateCursorReducer from "./update_cursor_reducer";
 // Import all table schema definitions
 import CursorRow from "./cursor_table";
 import HotPotatoGameRow from "./hot_potato_game_table";
+import ReadyPlayerRow from "./ready_player_table";
 
 /** Type-only namespace exports for generated type groups. */
 
@@ -70,10 +72,22 @@ const tablesSchema = __schema({
       { name: 'hot_potato_game_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, HotPotatoGameRow),
+  readyPlayer: __table({
+    name: 'ready_player',
+    indexes: [
+      { accessor: 'identity', name: 'ready_player_identity_idx_btree', algorithm: 'btree', columns: [
+        'identity',
+      ] },
+    ],
+    constraints: [
+      { name: 'ready_player_identity_key', constraint: 'unique', columns: ['identity'] },
+    ],
+  }, ReadyPlayerRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+  __reducerSchema("ready_up", ReadyUpReducer),
   __reducerSchema("set_cursor_name", SetCursorNameReducer),
   __reducerSchema("start_hot_potato", StartHotPotatoReducer),
   __reducerSchema("update_cursor", UpdateCursorReducer),

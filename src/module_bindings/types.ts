@@ -39,8 +39,22 @@ export const HotPotatoGame = __t.object("HotPotatoGame", {
   durationSeconds: __t.u32(),
   loserIdentity: __t.option(__t.identity()),
   loserName: __t.option(__t.string()),
+  lobbyEndsAtMicros: __t.u64(),
 });
 export type HotPotatoGame = __Infer<typeof HotPotatoGame>;
+
+export const LobbyJob = __t.object("LobbyJob", {
+  scheduledId: __t.u64(),
+  scheduledAt: __t.scheduleAt(),
+  roundId: __t.u64(),
+});
+export type LobbyJob = __Infer<typeof LobbyJob>;
+
+export const ReadyPlayer = __t.object("ReadyPlayer", {
+  identity: __t.identity(),
+  roundId: __t.u64(),
+});
+export type ReadyPlayer = __Infer<typeof ReadyPlayer>;
 
 export const Sweep = __t.object("Sweep", {
   scheduleId: __t.u64(),

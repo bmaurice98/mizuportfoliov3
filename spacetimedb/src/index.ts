@@ -37,6 +37,7 @@ const hotPotatoGame = table(
     durationSeconds: t.u32(),
     loserIdentity: t.option(t.identity()),
     loserName: t.option(t.string()),
+    lobbyEndsAtMicros: t.u64(),
   },
 );
 
@@ -49,11 +50,30 @@ const explosionJob = table(
   },
 );
 
+const readyPlayer = table(
+  { name: "ready_player", public: true },
+  {
+    identity: t.identity().primaryKey(),
+    round_id: t.u64(),
+  },
+);
+
+const lobbyJob = table(
+  { name: "lobby_job", scheduled: (): any => resolve_lobby },
+  {
+    scheduled_id: t.u64().primaryKey().autoInc(),
+    scheduled_at: t.scheduleAt(),
+    round_id: t.u64(),
+  },
+);
+
 const spacetimedb = schema({
   cursor,
   sweep,
   hotPotatoGame,
   explosionJob,
+  readyPlayer,
+  lobbyJob,
 });
 export default spacetimedb;
 
@@ -93,6 +113,11 @@ function sqDist(ax: number, ay: number, bx: number, by: number) {
   return dx * dx + dy * dy;
 }
 
+function isParticipant(ctx: any, identity: any, roundId: bigint): boolean {
+  const row = ctx.db.readyPlayer.identity.find(identity);
+  return !!row && row.round_id === roundId;
+}
+
 function tryTransferBomb(
   ctx: any,
   moverIdentity: any,
@@ -114,6 +139,7 @@ function tryTransferBomb(
     for (const other of ctx.db.cursor.iter()) {
       if (other.identity.toHexString() === holderHex) continue;
       if (other.page !== moverPage) continue;
+      if (!isParticipant(ctx, other.identity, game.round_id)) continue; // bystander — skip
       if (sqDist(moverX, moverY, other.x, other.y) <= COLLISION_THRESHOLD_SQ) {
         ctx.db.hotPotatoGame.id.update({
           ...game,
@@ -124,7 +150,7 @@ function tryTransferBomb(
       }
     }
   } else {
-    // Someone else moved — did they walk into the holder?
+    if (!isParticipant(ctx, moverIdentity, game.round_id)) return; // bystander — can't receive it
     const holderRow = ctx.db.cursor.identity.find(game.bombHolder);
     if (!holderRow || holderRow.page !== moverPage) return;
     if (
@@ -223,9 +249,10 @@ function nameFor(identity: { toHexString(): string }) {
 }
 
 spacetimedb.clientDisconnected((ctx) => {
-  if (ctx.db.cursor.identity.find(ctx.sender)) {
+  if (ctx.db.cursor.identity.find(ctx.sender))
     ctx.db.cursor.identity.delete(ctx.sender);
-  }
+  if (ctx.db.readyPlayer.identity.find(ctx.sender))
+    ctx.db.readyPlayer.identity.delete(ctx.sender);
 });
 
 export const updateCursor = spacetimedb.reducer(
@@ -250,43 +277,54 @@ export const updateCursor = spacetimedb.reducer(
   },
 );
 
+const LOBBY_SECONDS = 15;
+const MIN_READY_PLAYERS = 2;
+
 export const startHotPotato = spacetimedb.reducer(
   { durationSeconds: t.u32() },
   (ctx, { durationSeconds }) => {
     const existing = ctx.db.hotPotatoGame.id.find(0n);
-    if (existing?.status === "active") {
-      throw new SenderError("A round is already in progress.");
+    if (existing?.status === "active" || existing?.status === "lobby") {
+      throw new SenderError("A round is already starting or in progress.");
     }
 
-    const activePlayers = [...ctx.db.cursor.iter()];
-    if (activePlayers.length < 2) {
-      throw new SenderError(
-        "Need at least 2 active visitors to start a round.",
-      );
-    }
+    // const activePlayers = [...ctx.db.cursor.iter()];
+    // if (activePlayers.length < 2) {
+    //   throw new SenderError(
+    //     "Need at least 2 active visitors to start a round.",
+    //   );
+    // }
 
-    const bombHolderRow =
-      activePlayers[ctx.random.integerInRange(0, activePlayers.length - 1)];
+    // const bombHolderRow =
+    //   activePlayers[ctx.random.integerInRange(0, activePlayers.length - 1)];
     const now = ctx.timestamp.microsSinceUnixEpoch;
     const roundId = (existing?.round_id ?? 0n) + 1n;
-    const endsAtMicros = now + BigInt(durationSeconds) * 1_000_000n;
+    const lobbyEndsAtMicros = now + BigInt(LOBBY_SECONDS) * 1_000_000n;
+
     // Defensive check just to be absolutely safe
-    if (!bombHolderRow) {
-      throw new SenderError("No active player selected");
+    // if (!bombHolderRow) {
+    //   throw new SenderError("No active player selected");
+    // }
+
+    // clear any stray ready rows left over from a previous round
+    for (const row of ctx.db.readyPlayer.iter()) {
+      ctx.db.readyPlayer.identity.delete(row.identity);
     }
 
     const row = {
       id: 0n,
-      status: "active",
+      status: "lobby",
       round_id: roundId,
-      bombHolder: bombHolderRow.identity,
+      bombHolder: undefined,
       bombHolderSince: now,
       startedAtMicros: now,
-      endsAtMicros: endsAtMicros,
+      endsAtMicros: now,
       durationSeconds: durationSeconds,
       loserIdentity: undefined,
       loserName: undefined,
+      lobbyEndsAtMicros,
     };
+
     // console.log(row);
 
     if (existing) {
@@ -295,10 +333,73 @@ export const startHotPotato = spacetimedb.reducer(
       ctx.db.hotPotatoGame.insert(row);
     }
 
+    ctx.db.lobbyJob.insert({
+      scheduled_id: 0n,
+      scheduled_at: ScheduleAt.time(lobbyEndsAtMicros),
+      round_id: roundId,
+    });
+
+    // ctx.db.explosionJob.insert({
+    //   scheduled_id: 0n,
+    //   scheduled_at: ScheduleAt.time(endsAtMicros),
+    //   round_id: roundId,
+    // });
+  },
+);
+
+export const readyUp = spacetimedb.reducer((ctx) => {
+  const game = ctx.db.hotPotatoGame.id.find(0n);
+  if (!game || game.status !== "lobby") {
+    throw new SenderError("There is no open lobby to ready up for right now.");
+  }
+  const existing = ctx.db.readyPlayer.identity.find(ctx.sender);
+  const row = { identity: ctx.sender, round_id: game.round_id };
+  if (existing) {
+    ctx.db.readyPlayer.identity.update(row);
+  } else {
+    ctx.db.readyPlayer.insert(row);
+  }
+});
+
+export const resolve_lobby = spacetimedb.reducer(
+  { arg: lobbyJob.rowType },
+  (ctx, { arg }) => {
+    const game = ctx.db.hotPotatoGame.id.find(0n);
+    if (!game || game.status !== "lobby" || game.round_id !== arg.round_id)
+      return; // stale job
+
+    const readyRows = [...ctx.db.readyPlayer.iter()].filter(
+      (r) => r.round_id === game.round_id,
+    );
+
+    if (readyRows.length < MIN_READY_PLAYERS) {
+      for (const row of readyRows)
+        ctx.db.readyPlayer.identity.delete(row.identity);
+      ctx.db.hotPotatoGame.id.update({ ...game, status: "idle" });
+      return;
+    }
+
+    // const bombHolderRow =
+    //   activePlayers[ctx.random.integerInRange(0, activePlayers.length - 1)];
+
+    const bombHolderRow =
+      readyRows[Math.floor(ctx.random.integerInRange(0, readyRows.length - 1))];
+    const now = ctx.timestamp.microsSinceUnixEpoch;
+    const endsAtMicros = now + BigInt(game.durationSeconds) * 1_000_000n;
+
+    ctx.db.hotPotatoGame.id.update({
+      ...game,
+      status: "active",
+      bombHolder: bombHolderRow.identity,
+      bombHolderSince: now,
+      startedAtMicros: now,
+      endsAtMicros,
+    });
+
     ctx.db.explosionJob.insert({
       scheduled_id: 0n,
       scheduled_at: ScheduleAt.time(endsAtMicros),
-      round_id: roundId,
+      round_id: game.round_id,
     });
   },
 );
@@ -322,5 +423,9 @@ export const trigger_explosion = spacetimedb.reducer(
       loserName: loserRow?.name,
     });
     console.log("Game Ended");
+    for (const row of ctx.db.readyPlayer.iter()) {
+      if (row.round_id === game.round_id)
+        ctx.db.readyPlayer.identity.delete(row.identity);
+    }
   },
 );
