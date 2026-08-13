@@ -5,7 +5,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "spacetimedb-compiler build src/index.ts"
+    "build": "spacetimedb-compiler build src/index.ts",
+    "generate": "spacetime generate --lang typescript --out-dir ./src/module_bindings --module-path ./spactimedb",
+    "publish": "spactime publish mizudevportfolio-db-esdo8 -s maincloud",
+    "clear": "spactime publish mizudevportfolio-db-esdo8 -c"
   },
   "dependencies": {
     "spacetimedb": "^1.4.0"

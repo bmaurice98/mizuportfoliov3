@@ -4,26 +4,12 @@ import { useEffect, useState } from "react";
 import { reducers } from "../src/module_bindings";
 import { useReducer, useSpacetimeDB } from "spacetimedb/react";
 import { Filter } from "bad-words";
+import { validateName } from "@/components/nameValidation";
+import { loadStoredName, storeName } from "@/components/nameStorage";
 
 const STORAGE_KEY = "portfolio_cursor_name";
 const REMEMBER_DAYS = 30;
 const profanity = new Filter();
-
-function loadStoredName(): string | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const { name, expiresAt } = JSON.parse(raw);
-    return Date.now() > expiresAt ? null : name;
-  } catch {
-    return null;
-  }
-}
-
-function storeName(name: string) {
-  const expiresAt = Date.now() + REMEMBER_DAYS * 24 * 60 * 60 * 1000;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, expiresAt }));
-}
 
 export function NameGate() {
   const conn = useSpacetimeDB();
@@ -51,16 +37,9 @@ export function NameGate() {
     e.preventDefault();
     const cleaned = value.trim();
 
-    if (cleaned.length < 2 || cleaned.length > 20) {
-      setError("Name must be 2-20 characters.");
-      return;
-    }
-    if (!/^[a-zA-Z0-9 _'-]+$/.test(cleaned)) {
-      setError("Only letters, numbers, spaces, - and _ allowed.");
-      return;
-    }
-    if (profanity.isProfane(cleaned)) {
-      setError("Please choose a different name.");
+    const validationError = validateName(cleaned);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 

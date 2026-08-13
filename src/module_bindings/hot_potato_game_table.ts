@@ -21,4 +21,5 @@ export default __t.row({
   durationSeconds: __t.u32().name("duration_seconds"),
   loserIdentity: __t.option(__t.identity()).name("loser_identity"),
   loserName: __t.option(__t.string()).name("loser_name"),
+  lobbyEndsAtMicros: __t.u64().name("lobby_ends_at_micros"),
 });
