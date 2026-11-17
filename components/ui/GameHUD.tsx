@@ -6,6 +6,7 @@ import { useTable, useReducer, useSpacetimeDB } from "spacetimedb/react";
 import { playExplosion, playWinChime } from "../gameAudio";
 import { storeName } from "../nameStorage";
 import { validateName } from "../nameValidation";
+import { useBotCursorsEnabled, setBotCursorsEnabled } from "../botSettings";
 
 const DEFAULT_DURATION = 30;
 const LOSER_BANNER_MS = 5000;
@@ -21,7 +22,7 @@ export function GameHUD() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showLoserBanner, setShowLoserBanner] = useState(false);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   const [renaming, setRenaming] = useState(false);
   const [nameValue, setNameValue] = useState("");
@@ -42,6 +43,7 @@ export function GameHUD() {
     : 0;
   const isLobby = game?.status === "lobby";
   const canStart = !isActive && !isLobby && cursors.length >= 2;
+  const botsEnabled = useBotCursorsEnabled();
 
   useEffect(() => {
     const prev = prevLobbyStatusRef.current;
@@ -148,7 +150,6 @@ export function GameHUD() {
       {/* Half-circle game menu — center-left, expands on hover/tap */}
       <div
         className="fixed left-0 top-1/2 -translate-y-1/2 z-10001 flex items-center"
-        onMouseEnter={() => setMenuOpen(true)}
         onMouseLeave={() => {
           setMenuOpen(false);
           setRenaming(false);
@@ -157,6 +158,8 @@ export function GameHUD() {
         <button
           type="button"
           onClick={() => setMenuOpen((o) => !o)}
+          onMouseEnter={() => setMenuOpen(true)}
+
           aria-label="Site games"
           aria-expanded={menuOpen}
           className="flex h-20 w-7 items-center justify-center rounded-r-full bg-neutral-900 text-white shadow-lg transition-colors hover:bg-neutral-800"
@@ -191,6 +194,12 @@ export function GameHUD() {
                   : canStart
                     ? "💣 Start Hot Potato"
                     : `💣 Waiting for players (${cursors.length}/2)`}
+            </button>
+            <button
+              onClick={() => setBotCursorsEnabled(!botsEnabled)}
+              className="w-full cursor-pointer rounded-lg bg-neutral-800 px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-neutral-700"
+            >
+              🤖 Simulated visitors: {botsEnabled ? "On" : "Off"}
             </button>
             <div className="my-1 h-px bg-neutral-700" />
 

@@ -67,6 +67,25 @@ const lobbyJob = table(
   },
 );
 
+const themeToken = table(
+  { name: "theme_token", public: true },
+  {
+    token: t.string().primaryKey(),
+    value: t.string(),
+    setBy: t.string(),
+    updatedAt: t.timestamp(),
+  },
+);
+
+// private: per-identity cooldown
+const themeRate = table(
+  { name: "theme_rate" },
+  {
+    identity: t.identity().primaryKey(),
+    lastAtMicros: t.u64(),
+  },
+);
+
 const spacetimedb = schema({
   cursor,
   sweep,
@@ -74,6 +93,8 @@ const spacetimedb = schema({
   explosionJob,
   readyPlayer,
   lobbyJob,
+  themeToken,
+  themeRate,
 });
 export default spacetimedb;
 
@@ -253,6 +274,8 @@ spacetimedb.clientDisconnected((ctx) => {
     ctx.db.cursor.identity.delete(ctx.sender);
   if (ctx.db.readyPlayer.identity.find(ctx.sender))
     ctx.db.readyPlayer.identity.delete(ctx.sender);
+  if (ctx.db.themeRate.identity.find(ctx.sender))
+    ctx.db.themeRate.identity.delete(ctx.sender);
 });
 
 export const updateCursor = spacetimedb.reducer(
@@ -429,3 +452,117 @@ export const trigger_explosion = spacetimedb.reducer(
     }
   },
 );
+
+// THEME HELPERS AND REDUCERS
+
+// ---------- Site theme ----------
+const THEME_DEFAULTS: Record<string, string> = {
+  background: "#09151a",
+  text: "#ffffff",
+  muted: "#c2c7c8",
+  accent: "#98d0d7",
+  accentDeep: "#115157",
+  card: "#202c32",
+};
+const THEME_STATEMENT_RE =
+  /^theme\.([A-Za-z]+)\s*=\s*["']?(#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}))["']?$/;
+const THEME_COOLDOWN_MICROS = 3_000_000n;
+
+function normalizeHex(hex: string): string {
+  const h = hex.toLowerCase();
+  return h.length === 4 ? `#${h[1]}${h[1]}${h[2]}${h[2]}${h[3]}${h[3]}` : h;
+}
+
+function luminance(hex: string): number {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrast(a: string, b: string): number {
+  const la = luminance(a);
+  const lb = luminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+function parseThemeSnippet(snippet: string): Record<string, string> {
+  if (snippet.length > 600) throw new SenderError("Snippet too long.");
+  const statements = snippet
+    .split(/[\n;]/)
+    .map((s) => s.trim())
+    .filter((s) => s && !s.startsWith("//"));
+  if (statements.length === 0) throw new SenderError("Nothing to apply.");
+  if (statements.length > 12) throw new SenderError("Max 12 statements.");
+
+  const updates: Record<string, string> = {};
+  for (const stmt of statements) {
+    const m = THEME_STATEMENT_RE.exec(stmt);
+    if (!m) throw new SenderError(`Couldn't read: ${stmt.slice(0, 40)}`);
+    const [, key, hex] = m;
+    if (!Object.hasOwn(THEME_DEFAULTS, key)) {
+      throw new SenderError(
+        `Unknown target "${key}". Try: ${Object.keys(THEME_DEFAULTS).join(", ")}`,
+      );
+    }
+    updates[key] = normalizeHex(hex);
+  }
+  return updates;
+}
+
+function enforceThemeCooldown(ctx: any) {
+  const now = ctx.timestamp.microsSinceUnixEpoch;
+  const row = ctx.db.themeRate.identity.find(ctx.sender);
+  if (row && now - row.lastAtMicros < THEME_COOLDOWN_MICROS) {
+    throw new SenderError("Slow down — try again in a few seconds.");
+  }
+  const next = { identity: ctx.sender, lastAtMicros: now };
+  if (row) ctx.db.themeRate.identity.update(next);
+  else ctx.db.themeRate.insert(next);
+}
+
+export const applyTheme = spacetimedb.reducer(
+  { snippet: t.string() },
+  (ctx, { snippet }) => {
+    enforceThemeCooldown(ctx);
+    const updates = parseThemeSnippet(snippet);
+
+    // Guard: the site must stay readable for everyone.
+    const effective: Record<string, string> = { ...THEME_DEFAULTS };
+    for (const row of ctx.db.themeToken.iter())
+      effective[row.token] = row.value;
+    Object.assign(effective, updates);
+    if (contrast(effective.text, effective.background) < 4.5) {
+      throw new SenderError(
+        "Text vs background contrast is too low (needs 4.5:1).",
+      );
+    }
+    if (contrast(effective.muted, effective.background) < 3) {
+      throw new SenderError(
+        "Muted text vs background contrast is too low (needs 3:1).",
+      );
+    }
+    if (contrast(effective.accent, effective.background) < 3) {
+      throw new SenderError(
+        "Accent vs background contrast is too low (needs 3:1).",
+      );
+    }
+
+    const setBy = ctx.db.cursor.identity.find(ctx.sender)?.name ?? "Anonymous";
+    for (const [token, value] of Object.entries(updates)) {
+      const row = { token, value, setBy, updatedAt: ctx.timestamp };
+      if (ctx.db.themeToken.token.find(token))
+        ctx.db.themeToken.token.update(row);
+      else ctx.db.themeToken.insert(row);
+    }
+  },
+);
+
+export const resetTheme = spacetimedb.reducer((ctx) => {
+  enforceThemeCooldown(ctx);
+  for (const row of [...ctx.db.themeToken.iter()]) {
+    ctx.db.themeToken.token.delete(row.token);
+  }
+});

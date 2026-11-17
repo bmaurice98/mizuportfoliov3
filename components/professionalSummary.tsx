@@ -1,6 +1,9 @@
+"use client";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 export default function ProfessionalSummary() {
+  const router = useRouter();
   return (
     <>
       <section className="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto relative z-10">
@@ -17,8 +20,8 @@ export default function ProfessionalSummary() {
                 Core Engineering
               </h3>
               <p className="font-body-md text-body-md text-on-surface-variant">
-                Building resilient microservices and distributed systems
-                capable of handling sizeable data throughput with sub-millisecond
+                Building resilient microservices and distributed systems capable
+                of handling sizeable data throughput with sub-millisecond
                 latency.
               </p>
             </div>
@@ -33,9 +36,8 @@ export default function ProfessionalSummary() {
                 UI/UX Precision
               </h3>
               <p className="font-body-md text-body-md text-on-surface-variant">
-                Translating complex data streams into intuitive, 
-                interfaces that provide clarity without sacrificing technical
-                depth.
+                Translating complex data streams into intuitive, interfaces that
+                provide clarity without sacrificing technical depth.
               </p>
             </div>
             <div className="col-span-1 flex flex-col space-y-4 border-l-2 border-secondary/30 pl-6">

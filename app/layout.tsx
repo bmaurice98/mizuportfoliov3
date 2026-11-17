@@ -7,6 +7,7 @@ import { CursorLayer } from "./CursorLayer";
 import { NameGate } from "./NameGate";
 import { GameHUD } from "@/components/ui/GameHUD";
 import { LobbyToast } from "@/components/ui/lobbyToast";
+import { ThemeSync } from "@/components/themeSync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,6 +56,7 @@ export default function RootLayout({
       <body className="bg-background text-on-background font-body-md text-body-md min-h-screen relative overflow-x-hidden selection:bg-secondary-container selection:text-primary pt-20">
         <Providers>
           <NameGate />
+          <ThemeSync />
           <LobbyToast />
           <CursorLayer />
           {children}

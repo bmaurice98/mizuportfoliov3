@@ -6,12 +6,16 @@
 import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
+import ApplyThemeReducer from "../apply_theme_reducer";
 import ReadyUpReducer from "../ready_up_reducer";
+import ResetThemeReducer from "../reset_theme_reducer";
 import SetCursorNameReducer from "../set_cursor_name_reducer";
 import StartHotPotatoReducer from "../start_hot_potato_reducer";
 import UpdateCursorReducer from "../update_cursor_reducer";
 
+export type ApplyThemeParams = __Infer<typeof ApplyThemeReducer>;
 export type ReadyUpParams = __Infer<typeof ReadyUpReducer>;
+export type ResetThemeParams = __Infer<typeof ResetThemeReducer>;
 export type SetCursorNameParams = __Infer<typeof SetCursorNameReducer>;
 export type StartHotPotatoParams = __Infer<typeof StartHotPotatoReducer>;
 export type UpdateCursorParams = __Infer<typeof UpdateCursorReducer>;

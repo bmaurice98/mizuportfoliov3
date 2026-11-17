@@ -62,3 +62,17 @@ export const Sweep = __t.object("Sweep", {
 });
 export type Sweep = __Infer<typeof Sweep>;
 
+export const ThemeRate = __t.object("ThemeRate", {
+  identity: __t.identity(),
+  lastAtMicros: __t.u64(),
+});
+export type ThemeRate = __Infer<typeof ThemeRate>;
+
+export const ThemeToken = __t.object("ThemeToken", {
+  token: __t.string(),
+  value: __t.string(),
+  setBy: __t.string(),
+  updatedAt: __t.timestamp(),
+});
+export type ThemeToken = __Infer<typeof ThemeToken>;
+

@@ -1,4 +1,5 @@
-import React from 'react'
+import React from "react";
+import { ThemeEditor } from "./ui/themeEditor";
 
 export default function TechDisplay() {
   return (
@@ -33,27 +34,7 @@ export default function TechDisplay() {
           </div>
         </div>
         {/* <!-- Bento Item 3 (Code Snippet) --> */}
-        <div className="col-span-1 md:col-span-1 bg-[#05080a] border border-white/10 rounded-xl p-6 font-code text-code overflow-hidden relative">
-          <div className="absolute top-0 left-0 w-full h-8 bg-surface-container flex items-center px-4 gap-2 border-b border-white/5">
-            <div className="w-2 h-2 rounded-full bg-error"></div>
-            <div className="w-2 h-2 rounded-full bg-secondary"></div>
-            <div className="w-2 h-2 rounded-full bg-primary-fixed"></div>
-          </div>
-          <div className="pt-8 text-on-surface-variant opacity-80">
-            <span className="text-secondary">const</span> init ={" "}
-            <span className="text-primary">async</span> () =&gt;{" "}
-            {
-              <>
-                <br />
-                  <span className="text-primary">await</span> connect();
-                <br />
-                  render(<span className="text-primary">'glass_ui'</span>);
-                <br />
-              </>
-            }
-            ;
-          </div>
-        </div>
+        <ThemeEditor />
       </div>
     </section>
   );

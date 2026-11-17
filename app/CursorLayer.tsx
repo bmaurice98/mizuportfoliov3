@@ -5,6 +5,12 @@ import { usePathname } from "next/navigation";
 import { tables, reducers } from "../src/module_bindings";
 import { useTable, useReducer, useSpacetimeDB } from "spacetimedb/react";
 
+import { useBotCursors } from "@/components/useBotCursors";
+import { useBotCursorsEnabled } from "@/components/botSettings";
+
+const MIN_VISIBLE_CURSORS = 5; // total cursors you want on screen (including you)
+const IDLE_MS = 5_000;
+
 export function CursorLayer() {
   const conn = useSpacetimeDB();
   const [cursors, isReady] = useTable(tables.cursor);
@@ -86,9 +92,25 @@ export function CursorLayer() {
     );
   }, [readyPlayers, game?.status, game?.roundId]);
 
-  if (!isReady || !conn || docSize.w === 0) return null;
+  const botsEnabled = useBotCursorsEnabled();
 
-  const IDLE_MS = 5_000;
+  const othersActive = useMemo(() => {
+    const me = conn?.identity?.toHexString();
+    return cursors.filter((c) => {
+      if (c.identity.toHexString() === me) return false;
+      return now - Number(c.updatedAt.microsSinceUnixEpoch) / 1000 < IDLE_MS;
+    }).length;
+  }, [cursors, now, conn?.identity]);
+
+  const gameBusy = game?.status === "lobby" || game?.status === "active";
+  const botCount =
+    botsEnabled && !gameBusy
+      ? Math.max(0, MIN_VISIBLE_CURSORS - 1 - othersActive) // -1 for yourself
+      : 0;
+
+  const { bots, register } = useBotCursors(botCount, pathname);
+
+  if (!isReady || !conn || docSize.w === 0) return null;
 
   const myIdentity = conn.identity?.toHexString();
 
@@ -170,6 +192,45 @@ export function CursorLayer() {
             </div>
           );
         })}
+      {bots.map((b) => (
+        <div
+          key={b.id}
+          ref={register(b.id)}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            opacity: 0,
+            willChange: "transform, opacity",
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <path
+              d="M2 2L18 9L11 11L9 18L2 2Z"
+              fill={b.color}
+              stroke="white"
+              strokeWidth="1"
+            />
+          </svg>
+          <span
+            style={{
+              position: "absolute",
+              left: 18,
+              top: 14,
+              whiteSpace: "nowrap",
+              fontSize: 11,
+              fontWeight: 600,
+              color: "white",
+              background: b.color,
+              padding: "2px 6px",
+              borderRadius: 4,
+              boxShadow: "0 0 2px rgba(0,0,0,0.5)",
+            }}
+          >
+            {"🤖" + b.name}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
