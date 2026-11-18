@@ -280,7 +280,7 @@ function colorFor(identity: { toHexString(): string }) {
 
 function nameFor(identity: { toHexString(): string }) {
   const h = hashOf(identity);
-  return `${ADJECTIVES[h % ADJECTIVES.length]} ${ANIMALS[(h >> 4) % ANIMALS.length]}`;
+  return `${ADJECTIVES[h % ADJECTIVES.length]} ${ANIMALS[(h >>> 4) % ANIMALS.length]}`;
 }
 
 spacetimedb.clientDisconnected((ctx) => {

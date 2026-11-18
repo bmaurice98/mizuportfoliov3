@@ -143,6 +143,78 @@ export const TIMELINE: TimelineEntry[] = [
   },
 ];
 
+/** Side B of Session Work: IT support and technician roles. */
+export const SUPPORT_TIMELINE: TimelineEntry[] = [
+  {
+    id: "hotline-media-it",
+    role: "IT Support Specialist",
+    company: "Hotline Media",
+    period: {
+      start: { iso: "2023-11", label: "November 2023" },
+      end: { iso: "2024-08", label: "August 2024" },
+    },
+    summary:
+      "Implemented and ran Google Workspace for the company remotely: user provisioning, access control, security policy, and the training and documentation to go with it.",
+    tags: ["Google Workspace", "IT Support"],
+    detail: {
+      overview: "Stood up and administered the company's Google Workspace.",
+      sections: [
+        {
+          heading: "Responsibilities",
+          list: [
+            "Implemented and managed Google Workspace, streamlining user provisioning, access control and security policies",
+            "Created and maintained user accounts, groups and permissions for role-based access",
+            "Configured the Google Admin Console: 2FA enforcement, email security policies and Drive sharing restrictions",
+            "Supported and trained employees on Gmail, Drive, Calendar and Meet",
+            "Wrote IT documentation and best practices for Workspace usage and troubleshooting",
+          ],
+        },
+      ],
+      technologies: ["Google Workspace", "Google Admin Console", "2FA", "Gmail", "Google Drive"],
+    },
+  },
+  {
+    id: "hope-college",
+    role: "IT Help Desk Technician",
+    company: "Hope College",
+    period: {
+      start: { iso: "2017-05", label: "May 2017" },
+      end: { iso: "2021-05", label: "May 2021" },
+    },
+    summary:
+      "Level 1 & 2 support for macOS and iOS users across campus, device management with Jamf Pro, network troubleshooting, documentation and end-user training.",
+    tags: ["macOS", "Jamf Pro", "Help Desk"],
+    detail: {
+      overview: "Campus help desk for macOS and iOS users, alongside a B.S. in Computer Science.",
+      sections: [
+        {
+          heading: "Responsibilities",
+          list: [
+            "Provided Level 1 & 2 support for macOS and iOS users, resolving hardware and software issues",
+            "Managed and deployed macOS devices with Jamf Pro, keeping them compliant with security policies",
+            "Assisted with network troubleshooting: Wi-Fi, VPN, DNS and DHCP",
+            "Created and maintained documentation for troubleshooting, onboarding and software installs",
+            "Trained end users on best practices and efficient use of macOS",
+          ],
+        },
+      ],
+      technologies: ["macOS", "iOS", "Jamf Pro", "Wi-Fi", "VPN", "DNS", "DHCP"],
+    },
+  },
+];
+
+export const SUPPORT_SKILLS: { label: string; items: string[] }[] = [
+  { label: "Operating systems", items: ["macOS", "iOS", "Windows", "Linux", "Ubuntu"] },
+  {
+    label: "Software & tools",
+    items: ["Jamf Pro", "Apple Remote Desktop", "Microsoft 365", "Google Workspace", "Adobe Creative Suite"],
+  },
+  { label: "Networking", items: ["TCP/IP", "DNS", "DHCP", "VPN", "Wi-Fi troubleshooting"] },
+  { label: "Hardware", items: ["MacBooks", "iMacs", "iPads", "Peripherals", "Printers"] },
+  { label: "Scripting & automation", items: ["Bash", "Python", "AppleScript"] },
+  { label: "IT support", items: ["Jira", "ServiceNow", "Zendesk", "User training", "Documentation"] },
+];
+
 export const TECH_STACK: ExpandableItem[] = [
   {
     id: "frontend",

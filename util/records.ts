@@ -8,6 +8,8 @@
 import projectsJson from "@/util/projects.json" with { type: "json" };
 import {
   PRACTICES,
+  SUPPORT_SKILLS,
+  SUPPORT_TIMELINE,
   TECH_STACK,
   TIMELINE,
   type TimelineEntry,
@@ -70,7 +72,27 @@ export type Track = {
   id: string;
   title: string;
   blocks: Block[];
+  /** Which side of the record the track is on. Defaults to "A". */
+  side?: Side;
 };
+
+export type Side = "A" | "B";
+
+export const sideOf = (t: Track): Side => t.side ?? "A";
+
+/** True when the record has tracks on more than one side. */
+export const isDoubleSided = (r: RecordDef) => r.tracks.some((t) => sideOf(t) === "B");
+
+/**
+ * Printed track number: "01" on a one-sided record, "A1"/"B2" otherwise.
+ * Indexes stay global across sides so presence and follow mode are unaffected.
+ */
+export function trackNo(r: RecordDef, i: number): string {
+  if (!isDoubleSided(r)) return String(i + 1).padStart(2, "0");
+  const side = sideOf(r.tracks[i] ?? r.tracks[0]);
+  const n = r.tracks.slice(0, i + 1).filter((t) => sideOf(t) === side).length;
+  return `${side}${n}`;
+}
 
 /** Procedural sleeve artwork. No image assets required. */
 export type SleeveArt =
@@ -353,7 +375,8 @@ export const RECORDS: RecordDef[] = [
     year: "2022–27",
     divider: "Releases",
     format: "LP",
-    description: "Credits from client and studio engagements.",
+    description:
+      "Side A: client and studio engagements. Side B: IT support and technician work.",
     theme: "session",
     art: { kind: "rings" },
     palette: {
@@ -362,11 +385,51 @@ export const RECORDS: RecordDef[] = [
       accent: "#d4a24c",
       accent2: "#8c2f39",
     },
-    tracks: TIMELINE.map((entry) => ({
-      id: entry.id,
-      title: entry.company,
-      blocks: [{ type: "credit", entry }],
-    })),
+    tracks: [
+      ...TIMELINE.map<Track>((entry) => ({
+        id: entry.id,
+        title: entry.company,
+        side: "A",
+        blocks: [{ type: "credit", entry }],
+      })),
+      // Side B: the IT support / technician résumé.
+      ...SUPPORT_TIMELINE.map<Track>((entry) => ({
+        id: entry.id,
+        title: entry.company,
+        side: "B",
+        blocks: [{ type: "credit", entry }],
+      })),
+      {
+        id: "bench-notes",
+        title: "Bench Notes",
+        side: "B",
+        blocks: [
+          { type: "lede", text: "Home lab, hardware repair and the support toolkit." },
+          { type: "heading", text: "Home Lab for macOS & IT Testing · Aug 2025" },
+          {
+            type: "text",
+            text: "Set up virtual environments on multiple macOS devices for testing software deployments, scripting and system troubleshooting.",
+          },
+          { type: "heading", text: "Tech Repair & Upgrades · Mar 2025" },
+          {
+            type: "text",
+            text: "Hands-on macOS hardware repair: upgrading RAM and SSDs and troubleshooting hardware faults on MacBooks and iMacs.",
+          },
+          ...SUPPORT_SKILLS.map<Block>((g) => ({ type: "chips", label: g.label, items: g.items })),
+          {
+            type: "links",
+            items: [
+              {
+                label: "Résumé",
+                value: "IT / Technician résumé (PDF)",
+                href: "/resume/BMResume%20Technician%202026.pdf",
+                icon: "description",
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   {
     id: "technical-notes",
