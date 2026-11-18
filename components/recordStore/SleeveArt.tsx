@@ -34,15 +34,15 @@ function Credits({
   const kind = record.art.kind;
   if (kind === "type") return null; // the motif *is* the typography
   const font =
-    kind === "sunrise" || kind === "rings"
+    kind === "sunrise" || kind === "rings" || kind === "notebook" || kind === "contact-sheet"
       ? "var(--font-rs-serif), Georgia, serif"
       : kind === "schematic"
         ? "var(--font-rs-mono), monospace"
         : kind === "riso"
           ? "var(--font-rs-syne), sans-serif"
           : "var(--font-rs-grotesk), sans-serif";
-  const italic = kind === "rings";
-  const upper = kind === "grid" || kind === "schematic";
+  const italic = kind === "rings" || kind === "notebook";
+  const upper = kind === "grid" || kind === "schematic" || kind === "bars";
   return (
     <g fill={ink}>
       <text
@@ -243,6 +243,88 @@ function Motif({ record }: { record: RecordDef }) {
           </text>
         </g>
       );
+    case "contact-sheet": {
+      // A strip of film frames with sprocket holes.
+      const frames = [0, 1, 2, 3];
+      return (
+        <g>
+          <rect x="0" y="30" width="100" height="58" fill="#050404" />
+          {Array.from({ length: 14 }, (_, i) => (
+            <g key={i} fill={paper}>
+              <rect x={2 + i * 7.2} y="32.5" width="3.4" height="2.6" rx="0.6" />
+              <rect x={2 + i * 7.2} y="83" width="3.4" height="2.6" rx="0.6" />
+            </g>
+          ))}
+          {frames.map((i) => (
+            <g key={i}>
+              <rect x={4 + i * 24} y="38" width="21" height="42" fill={i === 1 ? accent : "#2b2321"} />
+              <circle cx={14.5 + i * 24} cy={52 + (i % 2) * 8} r={4 + i} fill={accent2} opacity={i === 1 ? 0.9 : 0.25} />
+              <text
+                x={5 + i * 24}
+                y="78"
+                fontSize="2.6"
+                fill={accent2}
+                opacity="0.7"
+                style={{ fontFamily: "var(--font-rs-mono), monospace" }}
+              >
+                {`${12 + i}A`}
+              </text>
+            </g>
+          ))}
+          <rect x="27" y="36" width="25" height="46" fill="none" stroke={accent} strokeWidth="1" />
+        </g>
+      );
+    }
+    case "notebook":
+      return (
+        <g>
+          {Array.from({ length: 13 }, (_, i) => (
+            <line key={i} x1="0" x2="100" y1={28 + i * 5.6} y2={28 + i * 5.6} stroke={accent2} strokeWidth="0.35" />
+          ))}
+          <line x1="14" x2="14" y1="0" y2="100" stroke={accent} strokeWidth="0.5" />
+          <g fill="none" stroke={ink} strokeWidth="0.9" strokeLinecap="round">
+            <path d="M20 44 q6 -4 12 0 t12 0 t12 0" />
+            <path d="M20 55.6 q5 -3 10 0 t10 0" />
+            <path d="M20 67 l8 0 M32 67 l18 0" />
+          </g>
+          <g fill={accent}>
+            <circle cx="7" cy="40" r="1.6" />
+            <circle cx="7" cy="60" r="1.6" />
+            <circle cx="7" cy="80" r="1.6" />
+          </g>
+          <text
+            x="62"
+            y="88"
+            fill={ink}
+            fontSize="5"
+            transform="rotate(-6 62 88)"
+            style={{ fontFamily: "var(--font-rs-serif), Georgia, serif", fontStyle: "italic" }}
+          >
+            v3 notes
+          </text>
+        </g>
+      );
+    case "bars": {
+      const heights = [18, 30, 44, 26, 52, 38, 60, 34, 22, 46, 30, 16];
+      return (
+        <g>
+          {heights.map((h, i) => (
+            <rect
+              key={i}
+              x={6 + i * 7.6}
+              y={92 - h}
+              width="5"
+              height={h}
+              rx="1"
+              fill={i % 3 === 1 ? accent : accent2}
+              opacity={0.55 + (h / 60) * 0.45}
+            />
+          ))}
+          <circle cx="78" cy="34" r="8" fill="none" stroke={accent} strokeWidth="1.2" />
+          <circle cx="78" cy="34" r="2" fill={accent} />
+        </g>
+      );
+    }
     case "type":
       return (
         <g

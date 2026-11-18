@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono, Space_Grotesk, Syne } from "next/font/google";
 import { RecordStore } from "@/components/recordStore/RecordStore";
+import { StoreJsonLd } from "@/components/recordStore/StoreJsonLd";
 import "@/components/recordStore/recordStore.css";
 
 // Per-record typography. Exposed as CSS variables consumed by themes.ts.
@@ -21,6 +22,7 @@ export default function Home() {
       className={`${serif.variable} ${grotesk.variable} ${syne.variable} ${mono.variable}`}
     >
       <RecordStore />
+      <StoreJsonLd />
     </div>
   );
 }

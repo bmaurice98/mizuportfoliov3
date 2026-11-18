@@ -3,8 +3,9 @@
 import Image from "next/image";
 import { Icon } from "@/components/ui/icon";
 import { ThemeEditor } from "@/components/ui/themeEditor";
-import ContactForm from "@/components/contactPage/contactForm";
-import type { Block, WidgetId } from "@/util/records";
+import type { Block, ListeningView, WidgetId } from "@/util/records";
+import { ContactSheet } from "./ContactSheet";
+import { ListeningWidget } from "./ListeningWidget";
 
 /** Renders one track's content blocks. Pure presentation, data-driven. */
 export function TrackBlocks({ blocks }: { blocks: Block[] }) {
@@ -164,12 +165,108 @@ function BlockView({ block: b }: { block: Block }) {
           ))}
         </ul>
       );
+    case "image":
+      return (
+        <figure className="rs-figure">
+          <Image
+            src={b.src}
+            alt={b.alt}
+            width={b.width}
+            height={b.height}
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            loading="lazy"
+          />
+          {b.caption && <figcaption>{b.caption}</figcaption>}
+        </figure>
+      );
+    case "video":
+      return (
+        <figure className="rs-figure">
+          {youtubeId(b.src) ? (
+            <iframe
+              className="rs-video"
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId(b.src)}`}
+              title={b.title}
+              loading="lazy"
+              allow="encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <video className="rs-video" src={b.src} poster={b.poster} controls preload="none" title={b.title} />
+          )}
+          {b.caption && <figcaption>{b.caption}</figcaption>}
+        </figure>
+      );
+    case "code":
+      return (
+        <figure className="rs-figure">
+          <pre className="rs-code" tabIndex={0} data-lang={b.lang}>
+            <code>{b.code}</code>
+          </pre>
+          {b.caption && <figcaption>{b.caption}</figcaption>}
+        </figure>
+      );
+    case "quote":
+      return (
+        <blockquote className="rs-quote">
+          <p>{b.text}</p>
+          {b.cite && <cite>{b.cite}</cite>}
+        </blockquote>
+      );
+    case "photos":
+      return <ContactSheet photos={b.photos} empty={b.empty} />;
+    case "log": {
+      const e = b.entry;
+      return (
+        <article className="rs-log">
+          <p className="rs-credit-meta">
+            <time dateTime={e.date}>
+              {new Date(`${e.date}T00:00:00Z`).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                timeZone: "UTC",
+              })}
+            </time>
+            {e.tags?.map((t) => (
+              <span key={t} className="rs-log-tag">
+                #{t}
+              </span>
+            ))}
+          </p>
+          <h4 className="rs-log-title">{e.title}</h4>
+          {e.body.map((para, i) => (
+            <p key={i} className="rs-text">
+              {para}
+            </p>
+          ))}
+          {e.refs?.length ? (
+            <p className="rs-log-refs">
+              {e.refs.map((r) =>
+                r.href ? (
+                  <a key={r.label} href={r.href} target="_blank" rel="noreferrer">
+                    {r.label}
+                  </a>
+                ) : (
+                  <span key={r.label}>{r.label}</span>
+                ),
+              )}
+            </p>
+          ) : null}
+        </article>
+      );
+    }
     case "widget":
-      return <Widget id={b.widget} />;
+      return <Widget id={b.widget} view={b.view} />;
   }
 }
 
-function Widget({ id }: { id: WidgetId }) {
+function youtubeId(src: string): string | null {
+  const m = src.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
+  return m?.[1] ?? null;
+}
+
+function Widget({ id, view }: { id: WidgetId; view?: ListeningView }) {
   switch (id) {
     case "theme-console":
       // Reused as-is: writes to the shared SpacetimeDB theme tokens.
@@ -178,12 +275,8 @@ function Widget({ id }: { id: WidgetId }) {
           <ThemeEditor />
         </div>
       );
-    case "contact-form":
-      return (
-        <div className="rs-widget rs-widget--form">
-          <ContactForm />
-        </div>
-      );
+    case "listening":
+      return <ListeningWidget view={view ?? "now-playing"} />;
     case "games":
       return (
         <p className="rs-note">

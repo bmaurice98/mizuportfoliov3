@@ -38,6 +38,7 @@ import ApplyThemeReducer from "./apply_theme_reducer";
 import ReadyUpReducer from "./ready_up_reducer";
 import ResetThemeReducer from "./reset_theme_reducer";
 import SetCursorNameReducer from "./set_cursor_name_reducer";
+import SetListeningReducer from "./set_listening_reducer";
 import StartHotPotatoReducer from "./start_hot_potato_reducer";
 import UpdateCursorReducer from "./update_cursor_reducer";
 
@@ -46,6 +47,7 @@ import UpdateCursorReducer from "./update_cursor_reducer";
 // Import all table schema definitions
 import CursorRow from "./cursor_table";
 import HotPotatoGameRow from "./hot_potato_game_table";
+import ListenerRow from "./listener_table";
 import ReadyPlayerRow from "./ready_player_table";
 import ThemeTokenRow from "./theme_token_table";
 
@@ -75,6 +77,17 @@ const tablesSchema = __schema({
       { name: 'hot_potato_game_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, HotPotatoGameRow),
+  listener: __table({
+    name: 'listener',
+    indexes: [
+      { accessor: 'identity', name: 'listener_identity_idx_btree', algorithm: 'btree', columns: [
+        'identity',
+      ] },
+    ],
+    constraints: [
+      { name: 'listener_identity_key', constraint: 'unique', columns: ['identity'] },
+    ],
+  }, ListenerRow),
   readyPlayer: __table({
     name: 'ready_player',
     indexes: [
@@ -105,6 +118,7 @@ const reducersSchema = __reducers(
   __reducerSchema("ready_up", ReadyUpReducer),
   __reducerSchema("reset_theme", ResetThemeReducer),
   __reducerSchema("set_cursor_name", SetCursorNameReducer),
+  __reducerSchema("set_listening", SetListeningReducer),
   __reducerSchema("start_hot_potato", StartHotPotatoReducer),
   __reducerSchema("update_cursor", UpdateCursorReducer),
 );

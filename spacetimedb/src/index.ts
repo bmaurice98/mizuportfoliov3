@@ -86,8 +86,22 @@ const themeRate = table(
   },
 );
 
+// Which record each visitor has on their turntable. Opt-in on the client
+// ("Share what I'm playing"); rows are removed on disconnect or when the
+// visitor returns to the crates. Powers record markers and follow mode.
+const listener = table(
+  { name: "listener", public: true },
+  {
+    identity: t.identity().primaryKey(),
+    record: t.string(),
+    track: t.u32(),
+    updatedAt: t.timestamp(),
+  },
+);
+
 const spacetimedb = schema({
   cursor,
+  listener,
   sweep,
   hotPotatoGame,
   explosionJob,
@@ -276,7 +290,36 @@ spacetimedb.clientDisconnected((ctx) => {
     ctx.db.readyPlayer.identity.delete(ctx.sender);
   if (ctx.db.themeRate.identity.find(ctx.sender))
     ctx.db.themeRate.identity.delete(ctx.sender);
+  if (ctx.db.listener.identity.find(ctx.sender))
+    ctx.db.listener.identity.delete(ctx.sender);
 });
+
+const RECORD_ID_PATTERN = /^[a-z0-9-]{1,40}$/;
+const MAX_TRACK = 99;
+
+/** Set (or clear, with record "") the record this visitor is playing. */
+export const setListening = spacetimedb.reducer(
+  { record: t.string(), track: t.u32() },
+  (ctx, { record, track }) => {
+    const existing = ctx.db.listener.identity.find(ctx.sender);
+    if (record === "") {
+      if (existing) ctx.db.listener.identity.delete(ctx.sender);
+      return;
+    }
+    if (!RECORD_ID_PATTERN.test(record)) {
+      throw new SenderError("Unknown record.");
+    }
+    if (track > MAX_TRACK) throw new SenderError("Unknown track.");
+    const row = {
+      identity: ctx.sender,
+      record,
+      track,
+      updatedAt: ctx.timestamp,
+    };
+    if (existing) ctx.db.listener.identity.update(row);
+    else ctx.db.listener.insert(row);
+  },
+);
 
 export const updateCursor = spacetimedb.reducer(
   { x: t.f32(), y: t.f32(), page: t.string() },

@@ -8,6 +8,7 @@ import { NameGate } from "./NameGate";
 import { GameHUD } from "@/components/ui/GameHUD";
 import { LobbyToast } from "@/components/ui/lobbyToast";
 import { ThemeSync } from "@/components/themeSync";
+import { ListeningSync } from "@/components/realtime/listening";
 import { siteConfig } from "@/util/siteConfig";
 
 const geistSans = Geist({
@@ -59,6 +60,7 @@ export default function RootLayout({
         <Providers>
           <NameGate />
           <ThemeSync />
+          <ListeningSync />
           <LobbyToast />
           <CursorLayer />
           {children}

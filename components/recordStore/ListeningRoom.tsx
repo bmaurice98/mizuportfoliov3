@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
 import { trackLength, type RecordDef } from "@/util/records";
 import { SleeveArt } from "./SleeveArt";
@@ -24,6 +24,8 @@ export function ListeningRoom({
   currentTrack,
   onTrack,
   onReturn,
+  followTrack = null,
+  followBar,
 }: {
   record: RecordDef;
   stage: RoomStage;
@@ -32,6 +34,10 @@ export function ListeningRoom({
   currentTrack: number;
   onTrack: (index: number) => void;
   onReturn: () => void;
+  /** In follow mode: the leader's current track, which we scroll to. */
+  followTrack?: number | null;
+  /** Who else is here / follow controls (real-time, optional). */
+  followBar?: ReactNode;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -68,7 +74,7 @@ export function ListeningRoom({
     return () => io.disconnect();
   }, [live, record.id, onTrack]);
 
-  const goToTrack = (i: number) => {
+  const goToTrack = (i: number, focus = true) => {
     const el = scrollRef.current?.querySelector<HTMLElement>(
       `[data-track-index="${i}"]`,
     );
@@ -79,8 +85,19 @@ export function ListeningRoom({
       behavior: reduce ? "auto" : "smooth",
     });
     onTrack(i);
-    el.focus({ preventScroll: true });
+    if (focus) el.focus({ preventScroll: true });
   };
+
+  // Follow mode: when the leader changes track, so do we.
+  const goRef = useRef(goToTrack);
+  useEffect(() => {
+    goRef.current = goToTrack;
+  });
+  useEffect(() => {
+    if (followTrack == null || !live) return;
+    if (followTrack >= record.tracks.length) return;
+    goRef.current(followTrack, false);
+  }, [followTrack, live, record.tracks.length]);
 
   const track = record.tracks[currentTrack] ?? record.tracks[0];
 
@@ -137,6 +154,8 @@ export function ListeningRoom({
             <span className="rs-now-title">{track.title}</span>
           </p>
         </div>
+
+        {followBar}
 
         <button type="button" className="rs-return" onClick={onReturn}>
           <Icon name="undo" />

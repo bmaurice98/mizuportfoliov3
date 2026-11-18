@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useRef } from "react";
 import { groupByDivider, type RecordDef } from "@/util/records";
 import { SleeveArt } from "./SleeveArt";
+import type { Listener } from "@/components/realtime/listening";
 
 export type CrateSlotState = "rest" | "pulling" | "out" | "settling";
 
@@ -16,6 +17,7 @@ export function RecordCrate({
   activeId,
   selectedId,
   slotState,
+  listeners = {},
   onActivate,
   onSelect,
   disabled,
@@ -24,6 +26,8 @@ export function RecordCrate({
   activeId: string;
   selectedId: string | null;
   slotState: CrateSlotState;
+  /** Other visitors currently playing each record (by record id). */
+  listeners?: Record<string, Listener[]>;
   onActivate: (id: string) => void;
   onSelect: (id: string) => void;
   disabled: boolean;
@@ -162,6 +166,10 @@ export function RecordCrate({
             {g.records.map((r) => {
               const isSel = r.id === selectedId;
               const state: CrateSlotState = isSel ? slotState : "rest";
+              const playing = listeners[r.id] ?? [];
+              const playingLabel = playing.length
+                ? ` ${playing.length} other ${playing.length === 1 ? "visitor is" : "visitors are"} playing it.`
+                : "";
               return (
                 <li
                   key={r.id}
@@ -175,7 +183,7 @@ export function RecordCrate({
                     data-crate-sleeve={r.id}
                     tabIndex={r.id === activeId ? 0 : -1}
                     disabled={disabled}
-                    aria-label={`${r.title} — ${r.format}, filed under ${r.divider}. ${r.description} Play this record.`}
+                    aria-label={`${r.title} — ${r.format}, filed under ${r.divider}. ${r.description}${playingLabel} Play this record.`}
                     onClick={() => onSelect(r.id)}
                     onFocus={() => onActivate(r.id)}
                     onMouseEnter={() => onActivate(r.id)}
@@ -185,6 +193,15 @@ export function RecordCrate({
                       <span className="rs-sleeve-wear" />
                     </span>
                   </button>
+                  {playing.length > 0 && (
+                    <span className="rs-marker" aria-hidden="true">
+                      <span className="rs-marker-disc" />
+                      {playing.slice(0, 4).map((l) => (
+                        <span key={l.id} className="rs-who-dot" style={{ background: l.color }} />
+                      ))}
+                      <span className="rs-marker-count">{playing.length}</span>
+                    </span>
+                  )}
                 </li>
               );
             })}

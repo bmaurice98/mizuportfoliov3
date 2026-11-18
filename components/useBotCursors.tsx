@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-// TODO: list your real routes here (must match usePathname() values).
-export const BOT_PAGES = ["/", "/projects", "/contact"];
+import { roomFor } from "@/shared/presence";
+import { RECORDS } from "@/util/records";
+
+// Rooms simulated visitors wander between: the crate floor and each record.
+export const BOT_PAGES = ["/", ...RECORDS.map((r) => roomFor("/", r.id))];
 
 export type BotMeta = { id: string; name: string; color: string };
 

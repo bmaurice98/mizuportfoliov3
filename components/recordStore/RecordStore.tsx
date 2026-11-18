@@ -15,6 +15,9 @@ import { isIntro, useRecordMachine, type Phase } from "./useRecordMachine";
 import { RecordCrate, type CrateSlotState } from "./RecordCrate";
 import { ListeningRoom, type RoomStage } from "./ListeningRoom";
 import { TransitionStage, type StageMode } from "./TransitionStage";
+import { ListeningBooths, FollowBar } from "./Booths";
+import { setPresence } from "@/shared/presence";
+import { useListeners, type Listener } from "@/components/realtime/listening";
 
 /* ------------------------------------------------------------------ */
 /* Small hooks                                                         */
@@ -80,6 +83,8 @@ export function RecordStore() {
   const [handoff, setHandoff] = useState(false);
   const [crateSlot, setCrateSlot] = useState<CrateSlotState>("rest");
   const pushedRef = useRef(false);
+  const [following, setFollowing] = useState<{ id: string; name: string } | null>(null);
+  const listeners = useListeners();
 
   const record = selection ? RECORDS_BY_ID[selection.id] : null;
   const stageMode: StageMode | null =
@@ -103,6 +108,12 @@ export function RecordStore() {
 
   const theme = themeFor(phase, record?.theme);
 
+  // Other visitors' turntables, grouped by record (real-time layer).
+  const others = listeners.filter((l) => !l.isMe);
+  const byRecord: Record<string, Listener[]> = {};
+  for (const l of others) (byRecord[l.record] ??= []).push(l);
+  const leader = following ? others.find((l) => l.id === following.id) : undefined;
+
   /* ---------------- actions ---------------- */
 
   const select = useCallback(
@@ -120,6 +131,7 @@ export function RecordStore() {
 
   const requestReturn = useCallback(() => {
     if (!selection) return;
+    setFollowing(null); // heading back to the crates ends a follow
     if (pushedRef.current) {
       // Let the browser's history drive it, so Back and our button agree.
       pushedRef.current = false;
@@ -129,6 +141,27 @@ export function RecordStore() {
     window.history.replaceState(null, "", window.location.pathname);
     dispatch({ type: "RETURN", instant: reduced });
   }, [selection, reduced, dispatch]);
+
+  /** Swap the record on the platter without a crate trip (follow mode). */
+  const switchTo = useCallback(
+    (id: string) => {
+      setLastId(id);
+      setActiveId(id);
+      dispatch({ type: "SWITCH", id });
+      window.history.replaceState(null, "", `?record=${id}`);
+    },
+    [dispatch],
+  );
+
+  const follow = useCallback(
+    (l: Listener | null) => {
+      setFollowing(l ? { id: l.id, name: l.name } : null);
+      if (!l) return;
+      if (phase === "browsing") select(l.record);
+      else if (phase === "listening" || phase === "playing") switchTo(l.record);
+    },
+    [phase, select, switchTo],
+  );
 
   const onTrack = useCallback(
     (index: number) => dispatch({ type: "SET_TRACK", index }),
@@ -162,16 +195,41 @@ export function RecordStore() {
     const onPop = () => {
       const id = recordFromUrl();
       pushedRef.current = false;
-      if (!id) dispatch({ type: "RETURN", instant: reduced });
+      if (!id) {
+        setFollowing(null);
+        dispatch({ type: "RETURN", instant: reduced });
+      }
       else {
         setLastId(id);
         setActiveId(id);
         dispatch({ type: "RESTORE", id });
+        dispatch({ type: "SWITCH", id });
       }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [dispatch, reduced]);
+
+  // Publish what's on the turntable for the real-time layer.
+  useEffect(() => {
+    const live = phase === "playing" || phase === "listening";
+    setPresence({
+      record: live && selection ? selection.id : null,
+      track: live && selection ? selection.currentTrack : 0,
+    });
+  }, [phase, selection]);
+  useEffect(() => () => setPresence({ record: null, track: 0 }), []);
+
+  // Follow mode: go wherever the leader's record goes.
+  const leaderRecord = leader?.record;
+  useEffect(() => {
+    if (!leaderRecord || !RECORDS_BY_ID[leaderRecord]) return;
+    // Syncing from an external system (the leader's real-time row).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (phase === "browsing") select(leaderRecord);
+    else if ((phase === "listening" || phase === "playing") && selection?.id !== leaderRecord)
+      switchTo(leaderRecord);
+  }, [leaderRecord, phase, selection?.id, select, switchTo]);
 
   // PLAYING → LISTENING once the arm is down and the platter is up to speed.
   useEffect(() => {
@@ -288,6 +346,7 @@ export function RecordStore() {
                 </span>
                 <span className="rs-hint-touch">Swipe to browse. Tap a sleeve to play it.</span>
               </p>
+              <ListeningBooths listeners={others} onFollow={follow} />
             </div>
             {browsing && (
               <aside className="rs-talker" aria-live="polite">
@@ -308,6 +367,7 @@ export function RecordStore() {
             activeId={activeId}
             selectedId={record?.id ?? lastId}
             slotState={slot}
+            listeners={byRecord}
             onActivate={setActiveId}
             onSelect={select}
             disabled={phase !== "browsing"}
@@ -323,6 +383,16 @@ export function RecordStore() {
             currentTrack={selection?.currentTrack ?? 0}
             onTrack={onTrack}
             onReturn={requestReturn}
+            followTrack={leader && leader.record === record.id ? leader.track : null}
+            followBar={
+              <FollowBar
+                following={following}
+                leader={leader}
+                others={others.filter((l) => l.record !== record.id)}
+                here={byRecord[record.id] ?? []}
+                onFollow={follow}
+              />
+            }
           />
         )}
       </main>
