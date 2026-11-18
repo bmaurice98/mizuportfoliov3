@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
-import { trackLength, type RecordDef } from "@/util/records";
+import { isDoubleSided, sideOf, trackLength, trackNo, type RecordDef, type Side } from "@/util/records";
 import { SleeveArt } from "./SleeveArt";
 import { Turntable } from "./Turntable";
 import { VinylDisc } from "./VinylDisc";
 import { TrackBlocks } from "./TrackBlocks";
 
 export type RoomStage = "hidden" | "deck" | "playing" | "listening" | "leaving";
-
-const pad = (n: number) => String(n + 1).padStart(2, "0");
 
 /**
  * The listening state: the record's own room. Not a modal — it *is* the page
@@ -100,6 +98,34 @@ export function ListeningRoom({
   }, [followTrack, live, record.tracks.length]);
 
   const track = record.tracks[currentTrack] ?? record.tracks[0];
+  const doubleSided = isDoubleSided(record);
+  const side = sideOf(track);
+  const sides = (["A", "B"] as Side[])
+    .map((s) => ({
+      side: s,
+      tracks: record.tracks
+        .map((t, i) => ({ t, i }))
+        .filter(({ t }) => sideOf(t) === s),
+    }))
+    .filter((g) => g.tracks.length);
+  const lastSide = sides[sides.length - 1]?.side ?? "A";
+
+  // Flip the disc over when playback crosses to the other side.
+  const vinylRef = useRef<HTMLDivElement>(null);
+  const prevSide = useRef(side);
+  useEffect(() => {
+    if (prevSide.current === side) return;
+    prevSide.current = side;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    vinylRef.current?.animate(
+      [
+        { transform: "rotateY(0deg)" },
+        { transform: "rotateY(90deg)", offset: 0.5 },
+        { transform: "rotateY(0deg)" },
+      ],
+      { duration: 520, easing: "cubic-bezier(.45,0,.2,1)" },
+    );
+  }, [side]);
 
   return (
     <section
@@ -135,8 +161,8 @@ export function ListeningRoom({
             label={record.title}
             onToggle={live ? () => setPaused((p) => !p) : undefined}
           >
-            <div className="rs-room-vinyl">
-              <VinylDisc record={record} spinning={spinning} />
+            <div className="rs-room-vinyl" ref={vinylRef}>
+              <VinylDisc record={record} spinning={spinning} side={side} />
             </div>
           </Turntable>
         </div>
@@ -149,7 +175,8 @@ export function ListeningRoom({
           </span>
           <p aria-live="polite">
             <span className="rs-kicker">
-              {spinning ? "Now playing" : "Paused"} · Track {pad(currentTrack)}
+              {spinning ? "Now playing" : "Paused"} ·{" "}
+              {doubleSided ? `Side ${side} · ` : ""}Track {trackNo(record, currentTrack)}
             </span>
             <span className="rs-now-title">{track.title}</span>
           </p>
@@ -166,44 +193,61 @@ export function ListeningRoom({
 
       <div className="rs-room-main">
         <nav className="rs-tracklist" aria-label={`${record.title} tracks`}>
-          <p className="rs-kicker rs-tracklist-side">Side A</p>
-          <ol>
-            {record.tracks.map((t, i) => (
-              <li key={t.id}>
-                <button
-                  type="button"
-                  onClick={() => goToTrack(i)}
-                  aria-current={i === currentTrack ? "true" : undefined}
-                >
-                  <span className="rs-track-no">{pad(i)}</span>
-                  <span className="rs-track-name">{t.title}</span>
-                  <span className="rs-track-len">{trackLength(t)}</span>
-                </button>
-              </li>
+          <div className="rs-tracklist-sides">
+            {sides.map((g) => (
+              <div key={g.side} className="rs-tracklist-group" data-side={g.side}>
+                <p className="rs-kicker rs-tracklist-side" id={`${record.id}-side-${g.side}`}>
+                  Side {g.side}
+                </p>
+                <ol aria-labelledby={`${record.id}-side-${g.side}`}>
+                  {g.tracks.map(({ t, i }) => (
+                    <li key={t.id}>
+                      <button
+                        type="button"
+                        onClick={() => goToTrack(i)}
+                        aria-current={i === currentTrack ? "true" : undefined}
+                      >
+                        <span className="rs-track-no">{trackNo(record, i)}</span>
+                        <span className="rs-track-name">{t.title}</span>
+                        <span className="rs-track-len">{trackLength(t)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             ))}
-          </ol>
+          </div>
         </nav>
 
         <div ref={scrollRef} className="rs-room-scroll">
           {record.tracks.map((t, i) => (
+            <Fragment key={t.id}>
+            {doubleSided && i > 0 && sideOf(t) !== sideOf(record.tracks[i - 1]) && (
+              <div className="rs-flip" role="separator" aria-label={`End of side ${sideOf(record.tracks[i - 1])}, side ${sideOf(t)} begins`}>
+                <span className="rs-kicker">End of side {sideOf(record.tracks[i - 1])}</span>
+                <span className="rs-flip-title">Flip the record · Side {sideOf(t)}</span>
+              </div>
+            )}
             <section
-              key={t.id}
               className="rs-track"
               data-track-index={i}
               tabIndex={-1}
               aria-labelledby={`${record.id}-${t.id}`}
             >
               <header className="rs-track-head">
-                <span className="rs-track-no">Track {pad(i)}</span>
+                <span className="rs-track-no">
+                  {doubleSided ? `Side ${sideOf(t)} · ` : ""}Track {trackNo(record, i)}
+                </span>
                 <h3 id={`${record.id}-${t.id}`} className="rs-track-title">
                   {t.title}
                 </h3>
               </header>
               <TrackBlocks blocks={t.blocks} />
             </section>
+            </Fragment>
           ))}
           <footer className="rs-runout">
-            <span className="rs-kicker">End of side A</span>
+            <span className="rs-kicker">End of side {lastSide}</span>
             <button type="button" className="rs-action rs-action--ghost" onClick={onReturn}>
               Put it back and browse <Icon name="arrow_back" />
             </button>

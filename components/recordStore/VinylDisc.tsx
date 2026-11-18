@@ -13,10 +13,12 @@ const REV_MS = 1800; // 33⅓ rpm
 export function VinylDisc({
   record,
   spinning = false,
+  side = "A",
   className = "",
 }: {
   record: RecordDef;
   spinning?: boolean;
+  side?: "A" | "B";
   className?: string;
 }) {
   const discRef = useRef<HTMLDivElement>(null);
@@ -34,7 +36,7 @@ export function VinylDisc({
           <span className="rs-vinyl-label-meta">
             {record.artist} · {record.catalog}
           </span>
-          <span className="rs-vinyl-label-rpm">33⅓ RPM · SIDE A</span>
+          <span className="rs-vinyl-label-rpm">33⅓ RPM · SIDE {side}</span>
           <span className="rs-vinyl-hole" />
         </div>
       </div>

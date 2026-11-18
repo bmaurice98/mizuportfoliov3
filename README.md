@@ -25,7 +25,7 @@ Other visitors browse alongside you: their cursors are synced live through Space
 | --------------- | -------- | -------------------------------------------- | ------------------------------------------- |
 | About Me        | Intro    | Introduction and principles                  | Warm analog — cream, amber, editorial serif |
 | Discography     | Releases | Projects, one per track                      | Digital — deep blue, silver, grotesk        |
-| Session Work    | Releases | Client and studio experience                 | Late-night — oxblood and brass              |
+| Session Work    | Releases | Side A: client and studio work · Side B: IT support and technician work, plus résumé | Late-night — oxblood and brass              |
 | Technical Notes | Studio   | Stack, infrastructure, practices             | Schematic — paper and signal orange, mono   |
 | B-Sides         | Studio   | Live theme editor, Hot Potato, ghost cursors | Uses the shared, visitor-edited theme       |
 | Contact         | Booking  | Links and contact form                       | Minimal — black, white, one accent          |
@@ -123,6 +123,8 @@ docs/record-store-audit.md  Architecture audit and refactor plan
 ### Adding or editing a record
 
 Add an entry to `RECORDS` in `util/records.ts`: an id, title, divider, theme id, sleeve art kind, palette, and a list of tracks made of content blocks (`text`, `list`, `chips`, `project`, `credit`, `links`, `widget`, …). New themes go in `components/recordStore/themes.ts`. No component changes are needed.
+
+**Side B:** give a track `side: "B"` and the record becomes double-sided: tracks are numbered A1/B1, the track list is grouped by side, a "flip the record" break separates the sides, and the vinyl flips over when playback crosses to the other side.
 
 ---
 
