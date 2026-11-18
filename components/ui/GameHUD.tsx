@@ -172,8 +172,8 @@ export function GameHUD() {
         <div
           className={`ml-2 origin-left transition-all duration-200 ${
             menuOpen
-              ? "pointer-events-auto scale-x-100 opacity-100"
-              : "pointer-events-none scale-x-95 opacity-0"
+              ? "pointer-events-auto scale-x-100 opacity-100 flex"
+              : "pointer-events-none scale-x-95 opacity-0 hidden"
           }`}
         >
           <div className="w-60 space-y-2 rounded-xl bg-neutral-900 p-3 text-white shadow-xl">
