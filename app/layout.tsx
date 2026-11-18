@@ -8,6 +8,7 @@ import { NameGate } from "./NameGate";
 import { GameHUD } from "@/components/ui/GameHUD";
 import { LobbyToast } from "@/components/ui/lobbyToast";
 import { ThemeSync } from "@/components/themeSync";
+import { siteConfig } from "@/util/siteConfig";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,6 +23,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Dev Mizu - Portfolio",
   description: "Portfolio website of Brandon Maurice",
+  metadataBase: new URL(siteConfig.url),
 };
 
 export default function RootLayout({
