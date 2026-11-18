@@ -63,7 +63,7 @@ export default function RootLayout({
           <CursorLayer />
           {children}
           <GameHUD />
-          <Footer />
+          {/* <Footer /> */}
         </Providers>
       </body>
     </html>
