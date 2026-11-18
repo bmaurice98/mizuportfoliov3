@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import MobileNavbar from "./mobileNavbar";
 
-
 const navLinks = {
   Home: "/",
   Projects: "/projects",
@@ -87,7 +86,11 @@ export default function Navbar() {
                 </li> */}
         </ul>
         {/* <!-- Trailing Action --> */}
-        <Link href="/Resume/BMResumeDev2026_Portfolio.pdf" download="Brandon_Maurice_Developer_Resume.pdf" prefetch={false}>
+        <Link
+          href="/resume/BMResumeDev2026_Portfolio.pdf"
+          download="Brandon_Maurice_Developer_Resume.pdf"
+          prefetch={false}
+        >
           <button
             type="button"
             className="hidden md:flex items-center justify-center px-6 py-3 bg-primary text-surface font-label-caps text-label-caps rounded-DEFAULT hover:opacity-90 transition-opacity"

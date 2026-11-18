@@ -1,30 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const title = "Experience & Tech Stack | Dev Mizu";
+const description =
+  "Work history and core tech stack of Brandon Maurice, a full-stack engineer working with React, Next.js, TypeScript, Node.js, and cloud infrastructure.";
 
 export const metadata: Metadata = {
-  title: "Dev Mizu - Experience",
-  description: "Portfolio website of Brandon Maurice - Experience Page",
+  title,
+  description,
+  alternates: { canonical: "/experience" },
+  openGraph: { title, description, url: "/experience", type: "website" },
+  twitter: { card: "summary", title, description },
 };
 
-export default function RootLayout({
+export default function ExperienceLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-
-      <div className="bg-background text-on-background font-body-md min-h-screen flex flex-col relative antialiased">
-        {children}
-      </div>
+    <div className="bg-background text-on-background font-body-md min-h-screen flex flex-col relative antialiased">
+      {children}
+    </div>
   );
 }
