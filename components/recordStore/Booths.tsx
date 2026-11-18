@@ -88,7 +88,7 @@ export function FollowBar({
         <div className="rs-who-row">
           <span className="rs-kicker">Also listening</span>
           <ul>
-            {here.map((l) => (
+            {here.slice(0, MAX_BOOTHS).map((l) => (
               <li key={l.id}>
                 <Dot color={l.color} />
                 {l.name}
@@ -99,11 +99,14 @@ export function FollowBar({
                 )}
               </li>
             ))}
+            {here.length > MAX_BOOTHS && (
+              <li className="rs-who-more">+{here.length - MAX_BOOTHS} more</li>
+            )}
           </ul>
         </div>
       )}
       {others.length > 0 && (
-        <div className="rs-who-row">
+        <div className="rs-who-row rs-who-row--elsewhere">
           <span className="rs-kicker">Elsewhere</span>
           <ul>
             {others.slice(0, MAX_BOOTHS).map((l) => (

@@ -1,27 +1,14 @@
-import { lastfm } from "@/util/listening/lastfm";
-import { spotify } from "@/util/listening/spotify";
-import { emptyListening, type ListeningProvider } from "@/util/listening/types";
+import { NOT_CONNECTED, SKIPPED, pickProvider } from "@/util/listening/providers";
+import { emptyListening } from "@/util/listening/types";
 
 /**
  * GET /api/listening — listening stats for the Heavy Rotation record.
  * Uses the first configured provider. Upstream calls are cached for 5 minutes
  * (fetch `next.revalidate` inside the provider); secrets never reach the client.
  */
-
-// Order = preference. Set LISTENING_PROVIDER=spotify|lastfm to force one.
-const PROVIDERS: ListeningProvider[] = [lastfm, spotify];
-
 export async function GET() {
-  const forced = process.env.LISTENING_PROVIDER;
-  const provider = PROVIDERS.find(
-    (p) => p.isConfigured() && (!forced || p.source === forced),
-  );
-
-  if (!provider) {
-    return Response.json(
-      emptyListening("Not connected yet — listening stats will appear here."),
-    );
-  }
+  const provider = pickProvider();
+  if (!provider) return Response.json(emptyListening(NOT_CONNECTED));
 
   try {
     const data = await provider.fetch();
@@ -30,9 +17,6 @@ export async function GET() {
     });
   } catch (err) {
     console.error("[listening]", err);
-    return Response.json(
-      emptyListening("The turntable skipped — couldn't reach the music service."),
-      { status: 200 },
-    );
+    return Response.json(emptyListening(SKIPPED));
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { reducers, tables } from "../../src/module_bindings";
 import { useReducer, useSpacetimeDB, useTable } from "spacetimedb/react";
 import { usePresence, useShareListening } from "@/shared/presence";
@@ -22,6 +22,12 @@ export type Listener = {
 };
 
 const SEND_DEBOUNCE_MS = 400;
+/**
+ * A listener row with no live cursor is only trusted this long after its last
+ * change. Rows can outlive a dropped connection (the disconnect callback
+ * doesn't always fire), and they'd otherwise pile up as "A visitor".
+ */
+const STALE_WITHOUT_CURSOR_MS = 5 * 60_000;
 
 export function ListeningSync() {
   const conn = useSpacetimeDB();
@@ -50,20 +56,27 @@ export function useListeners(): Listener[] {
   const [rows] = useTable(tables.listener);
   const [cursors] = useTable(tables.cursor);
   const me = conn?.identity?.toHexString();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
 
   return useMemo(() => {
     const byId = new Map(cursors.map((c) => [c.identity.toHexString(), c]));
-    return rows.map((r) => {
+    return rows.flatMap((r) => {
       const id = r.identity.toHexString();
       const c = byId.get(id);
-      return {
+      const age = now - Number(r.updatedAt.microsSinceUnixEpoch) / 1000;
+      if (!c && id !== me && age > STALE_WITHOUT_CURSOR_MS) return [];
+      return [{
         id,
         name: c?.name ?? "A visitor",
         color: c?.color ?? "#8c9292",
         record: r.record,
         track: r.track,
         isMe: id === me,
-      };
+      }];
     });
-  }, [rows, cursors, me]);
+  }, [rows, cursors, me, now]);
 }

@@ -1,5 +1,7 @@
 // Server-only: imported by app/api/listening/route.ts (reads secret env vars).
 import type { Artwork, ListeningData, ListeningProvider, RankedItem } from "./types";
+import { lastfmLog, lastfmRecommend } from "./lastfmTracking";
+import { artistImage } from "./artistImages";
 
 /**
  * Last.fm provider. Needs only a (free) API key and a public username:
@@ -51,6 +53,8 @@ const nameOf = (n: LfmNamed | undefined) => n?.name ?? n?.["#text"] ?? "";
 export const lastfm: ListeningProvider = {
   source: "lastfm",
   isConfigured: () => !!process.env.LASTFM_API_KEY && !!process.env.LASTFM_USERNAME,
+  log: lastfmLog,
+  recommend: lastfmRecommend,
 
   async fetch(): Promise<ListeningData> {
     const period = process.env.LASTFM_PERIOD ?? "1month";
@@ -88,6 +92,14 @@ export const lastfm: ListeningProvider = {
         art: art(i.image, i.artist ? `${i.name} by ${nameOf(i.artist)}` : i.name),
       }));
 
+    // Last.fm only returns a placeholder for artist photos; look them up elsewhere.
+    const topArtists = ranked(artists.topartists.artist);
+    await Promise.all(
+      topArtists.map(async (a) => {
+        if (!a.art) a.art = await artistImage(a.name);
+      }),
+    );
+
     const last = recent.recenttracks.track[0];
     const since = new Date(Number(info.user.registered.unixtime) * 1000);
     const fmt = (n: string | undefined) => (n ? Number(n).toLocaleString("en-US") : undefined);
@@ -107,7 +119,7 @@ export const lastfm: ListeningProvider = {
             playedAt: last.date ? new Date(Number(last.date.uts) * 1000).toISOString() : undefined,
           }
         : null,
-      topArtists: ranked(artists.topartists.artist),
+      topArtists,
       topAlbums: ranked(albums.topalbums.album),
       topTracks: ranked(tracks.toptracks.track),
       stats: [
