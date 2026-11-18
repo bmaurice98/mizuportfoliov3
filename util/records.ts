@@ -66,7 +66,15 @@ export type Block =
   | { type: "widget"; widget: WidgetId; view?: ListeningView };
 
 export type WidgetId = "theme-console" | "games" | "listening";
-export type ListeningView = "now-playing" | "top-artists" | "top-albums" | "top-tracks" | "stats";
+export type ListeningView =
+  | "now-playing"
+  | "top-artists"
+  | "top-albums"
+  | "top-tracks"
+  | "stats"
+  | "daily-log"
+  | "genres"
+  | "recommendations";
 
 export type Track = {
   id: string;
@@ -567,7 +575,8 @@ export const RECORDS: RecordDef[] = [
     year: "Live",
     divider: "Off The Clock",
     format: "LP",
-    description: "What's actually on my headphones: favourite artists, albums and songs.",
+    description:
+      "Side A: what's on my headphones. Side B: the song tracking from my MizuMaiNichi logger.",
     theme: "rotation",
     art: { kind: "bars" },
     palette: {
@@ -601,6 +610,40 @@ export const RECORDS: RecordDef[] = [
         id: "stats",
         title: "By The Numbers",
         blocks: [{ type: "widget", widget: "listening", view: "stats" }],
+      },
+      // Side B: song tracking, ported from the MizuMaiNichi logger.
+      {
+        id: "daily-log",
+        title: "Daily Log",
+        side: "B",
+        blocks: [
+          {
+            type: "text",
+            text: "Five unique songs a day, pulled from my scrobbles and tagged with genres and play counts — the same pipeline that feeds my MizuMaiNichi posts.",
+          },
+          { type: "widget", widget: "listening", view: "daily-log" },
+        ],
+      },
+      {
+        id: "genre-mix",
+        title: "Genre Mix",
+        side: "B",
+        blocks: [
+          { type: "text", text: "This week's listening by genre, weighted by how often each artist played." },
+          { type: "widget", widget: "listening", view: "genres" },
+        ],
+      },
+      {
+        id: "crate-digging",
+        title: "Crate Digging",
+        side: "B",
+        blocks: [
+          {
+            type: "text",
+            text: "Recommendations from the MizuMaiNichi engine: artists similar to what I've played lately, scored for popularity, with a bonus for songs and artists I haven't heard yet.",
+          },
+          { type: "widget", widget: "listening", view: "recommendations" },
+        ],
       },
     ],
   },

@@ -1,12 +1,43 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
 import { isDoubleSided, sideOf, trackLength, trackNo, type RecordDef, type Side } from "@/util/records";
 import { SleeveArt } from "./SleeveArt";
 import { Turntable } from "./Turntable";
 import { VinylDisc } from "./VinylDisc";
 import { TrackBlocks } from "./TrackBlocks";
+
+/* Track menu collapsed? Per-viewer preference, remembered in localStorage. */
+const MENU_KEY = "rs_tracklist_collapsed";
+const menuListeners = new Set<() => void>();
+function readMenuCollapsed() {
+  try {
+    return localStorage.getItem(MENU_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function setMenuCollapsed(v: boolean) {
+  try {
+    localStorage.setItem(MENU_KEY, v ? "1" : "0");
+  } catch {
+    /* storage unavailable: still toggles for this page view below */
+  }
+  memo = v;
+  menuListeners.forEach((l) => l());
+}
+let memo: boolean | null = null;
+function useMenuCollapsed() {
+  return useSyncExternalStore(
+    (l) => {
+      menuListeners.add(l);
+      return () => menuListeners.delete(l);
+    },
+    () => (memo ??= readMenuCollapsed()),
+    () => false,
+  );
+}
 
 export type RoomStage = "hidden" | "deck" | "playing" | "listening" | "leaving";
 
@@ -99,6 +130,8 @@ export function ListeningRoom({
 
   const track = record.tracks[currentTrack] ?? record.tracks[0];
   const doubleSided = isDoubleSided(record);
+  const menuCollapsed = useMenuCollapsed();
+  const menuId = `${record.id}-tracklist`;
   const side = sideOf(track);
   const sides = (["A", "B"] as Side[])
     .map((s) => ({
@@ -192,7 +225,40 @@ export function ListeningRoom({
       </div>
 
       <div className="rs-room-main">
-        <nav className="rs-tracklist" aria-label={`${record.title} tracks`}>
+        <nav
+          className="rs-tracklist"
+          aria-label={`${record.title} tracks`}
+          data-collapsed={menuCollapsed || undefined}
+        >
+          <div className="rs-tracklist-bar">
+            <p className="rs-kicker rs-tracklist-count">
+              {menuCollapsed ? (
+                <>
+                  <span className="rs-tracklist-now">
+                    {trackNo(record, currentTrack)} · {track.title}
+                  </span>
+                  <span aria-hidden="true"> · </span>
+                  {record.tracks.length} tracks{doubleSided && " · 2 sides"}
+                </>
+              ) : (
+                <>
+                  Tracklist · {record.tracks.length} tracks{doubleSided && " · 2 sides"}
+                </>
+              )}
+            </p>
+            <button
+              type="button"
+              className="rs-tracklist-toggle"
+              aria-expanded={!menuCollapsed}
+              aria-controls={menuId}
+              onClick={() => setMenuCollapsed(!menuCollapsed)}
+            >
+              {menuCollapsed ? "Show tracks" : "Hide tracks"}
+              <Icon name={menuCollapsed ? "expand_more" : "expand_less"} />
+            </button>
+          </div>
+          <div className="rs-tracklist-body" id={menuId} inert={menuCollapsed}>
+          <div className="rs-tracklist-inner">
           <div className="rs-tracklist-sides">
             {sides.map((g) => (
               <div key={g.side} className="rs-tracklist-group" data-side={g.side}>
@@ -216,6 +282,8 @@ export function ListeningRoom({
                 </ol>
               </div>
             ))}
+          </div>
+          </div>
           </div>
         </nav>
 
