@@ -1,28 +1,26 @@
-import Footer from "@/components/footer";
-import Hero from "@/components/hero";
-import Navbar from "@/components/navbar";
-import ProfessionalSummary from "@/components/professionalSummary";
-import TechDisplay from "@/components/techDisplay";
-import Image from "next/image";
+import type { Metadata } from "next";
+import { Fraunces, JetBrains_Mono, Space_Grotesk, Syne } from "next/font/google";
+import { RecordStore } from "@/components/recordStore/RecordStore";
+import "@/components/recordStore/recordStore.css";
+
+// Per-record typography. Exposed as CSS variables consumed by themes.ts.
+const serif = Fraunces({ subsets: ["latin"], variable: "--font-rs-serif", style: ["normal", "italic"] });
+const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-rs-grotesk" });
+const syne = Syne({ subsets: ["latin"], variable: "--font-rs-syne" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-rs-mono" });
+
+export const metadata: Metadata = {
+  title: "Dev Mizu Records — Portfolio of Brandon Maurice",
+  description:
+    "An interactive record store portfolio. Pull a record from the crate, put it on the turntable, and browse projects, experience and contact details.",
+};
 
 export default function Home() {
   return (
-    <div className="">
-      <div className="fixed top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-primary-container opacity-[0.03] blur-[150px] rounded-full pointer-events-none -z-10"></div>
-      <div className="fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-secondary opacity-[0.02] blur-[120px] rounded-full pointer-events-none -z-10"></div>
-      {/* // <!-- TopNavBar Component --> */}
-      <Navbar />
-      {/* // <!-- Main Content Canvas --> */}
-      <main className="w-full">
-        {/* <!-- Hero Section --> */}
-        <Hero />
-        {/* <!-- Professional Summary (Simulated below fold appearance) --> */}
-        <ProfessionalSummary />
-        {/* <!-- Abstract Tech Section (Bento Grid Style) --> */}
-        <TechDisplay />
-      </main>
-      {/* // <!-- Footer Component --> */}
-      {/* <Footer /> */}
+    <div
+      className={`${serif.variable} ${grotesk.variable} ${syne.variable} ${mono.variable}`}
+    >
+      <RecordStore />
     </div>
   );
 }
