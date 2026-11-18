@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // The original pages now live as records in the store. Temporary (307) so
+  // they can be brought back without browsers caching the redirect forever.
+  async redirects() {
+    return [
+      { source: "/projects", destination: "/?record=discography", permanent: false },
+      { source: "/experience", destination: "/?record=session-work", permanent: false },
+      { source: "/contact", destination: "/?record=contact", permanent: false },
+    ];
+  },
   images: {
     remotePatterns: [
       {

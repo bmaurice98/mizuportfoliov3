@@ -11,25 +11,27 @@ Other visitors browse alongside you: their cursors are synced live through Space
 ## Features
 
 ### The record store (`/`)
+
 - **Crate browsing** — sleeves filed behind cardboard dividers in a wooden crate. Hover or focus lifts a sleeve and nudges its neighbours aside. Browse with the scroll wheel, trackpad, click-and-drag, touch swipe, or the arrow / Home / End keys.
 - **Selection sequence** — pull the record → the jacket hinges open → the vinyl slides out of its inner sleeve → it's carried onto the platter → the tonearm lowers and the platter spins up → the room changes to the record's theme.
-- **Listening room** — not a modal; it *is* the page while a record plays. Artwork and turntable stay anchored while the tracks scroll (side-by-side on desktop, stacked on mobile). The track list follows your scroll position, and the turntable's Start/Stop key pauses the spin.
+- **Listening room** — not a modal; it _is_ the page while a record plays. Artwork and turntable stay anchored while the tracks scroll (side-by-side on desktop, stacked on mobile). The track list follows your scroll position, and the turntable's Start/Stop key pauses the spin.
 - **Returning** — the same sequence in reverse, back into the same slot in the crate. Leave via the Crates button, `Esc`, or the browser's Back button.
 - **Deep links** — every record has a URL (`/?record=discography`).
 - **Accessible** — semantic buttons and landmarks, roving keyboard focus, visible focus states, live-region announcements, a Skip button during transitions, and an instant path for `prefers-reduced-motion`. No sound is ever required.
 
 ### The collection
 
-| Record | Divider | Content | Theme |
-|---|---|---|---|
-| About Me | Intro | Introduction and principles | Warm analog — cream, amber, editorial serif |
-| Discography | Releases | Projects, one per track | Digital — deep blue, silver, grotesk |
-| Session Work | Releases | Client and studio experience | Late-night — oxblood and brass |
-| Technical Notes | Studio | Stack, infrastructure, practices | Schematic — paper and signal orange, mono |
-| B-Sides | Studio | Live theme editor, Hot Potato, ghost cursors | Uses the shared, visitor-edited theme |
-| Contact | Booking | Links and contact form | Minimal — black, white, one accent |
+| Record          | Divider  | Content                                      | Theme                                       |
+| --------------- | -------- | -------------------------------------------- | ------------------------------------------- |
+| About Me        | Intro    | Introduction and principles                  | Warm analog — cream, amber, editorial serif |
+| Discography     | Releases | Projects, one per track                      | Digital — deep blue, silver, grotesk        |
+| Session Work    | Releases | Client and studio experience                 | Late-night — oxblood and brass              |
+| Technical Notes | Studio   | Stack, infrastructure, practices             | Schematic — paper and signal orange, mono   |
+| B-Sides         | Studio   | Live theme editor, Hot Potato, ghost cursors | Uses the shared, visitor-edited theme       |
+| Contact         | Booking  | Links and contact form                       | Minimal — black, white, one accent          |
 
 ### Real-time (SpacetimeDB)
+
 - **Live cursors** with names and colours for every visitor, plus simulated "ghost" visitors when the site is quiet (toggleable).
 - **Name gate** — pick or randomise a cursor name; it's remembered for 30 days.
 - **Hot Potato** — an opt-in multiplayer cursor game. Ready up in the lobby, then pass the bomb by touching other players' cursors before the timer runs out.
@@ -72,14 +74,14 @@ npm run dev
 
 ### Scripts
 
-| Script | What it does |
-|---|---|
-| `npm run dev` | Start the Next.js dev server |
-| `npm run build` / `npm start` | Production build and server |
-| `npm run lint` | ESLint |
-| `npm run generate` | Regenerate the TypeScript client bindings in `src/module_bindings/` from the SpacetimeDB module |
-| `npm run publish` | Publish the SpacetimeDB module to maincloud |
-| `npm run clear` | Republish the module and **clear its data** |
+| Script                        | What it does                                                                                    |
+| ----------------------------- | ----------------------------------------------------------------------------------------------- |
+| `npm run dev`                 | Start the Next.js dev server                                                                    |
+| `npm run build` / `npm start` | Production build and server                                                                     |
+| `npm run lint`                | ESLint                                                                                          |
+| `npm run generate`            | Regenerate the TypeScript client bindings in `src/module_bindings/` from the SpacetimeDB module |
+| `npm run publish`             | Publish the SpacetimeDB module to maincloud                                                     |
+| `npm run clear`               | Republish the module and **clear its data**                                                     |
 
 ---
 
@@ -113,11 +115,13 @@ docs/record-store-audit.md  Architecture audit and refactor plan
 ```
 
 ### How it fits together
+
 - **Presentation** (`components/recordStore`) knows nothing about SpacetimeDB.
 - **Application state** lives in one reducer (`useRecordMachine.ts`): `browsing → pulling-record → opening-sleeve → removing-vinyl → placing-vinyl → playing → listening → returning`. Animations only report "phase finished"; stale or duplicate reports are ignored, so a skip or an interruption can't leave the UI stuck.
 - **Real-time** components are mounted once in the root layout and work on every route.
 
 ### Adding or editing a record
+
 Add an entry to `RECORDS` in `util/records.ts`: an id, title, divider, theme id, sleeve art kind, palette, and a list of tracks made of content blocks (`text`, `list`, `chips`, `project`, `credit`, `links`, `widget`, …). New themes go in `components/recordStore/themes.ts`. No component changes are needed.
 
 ---
@@ -125,17 +129,19 @@ Add an entry to `RECORDS` in `util/records.ts`: an id, title, divider, theme id,
 ## Roadmap
 
 **Real-time integration**
+
 - Per-record presence rooms, so cursors are only shared with visitors listening to the same record (today cursors are shared per page path).
 - Seeing which records other visitors are holding or playing, e.g. a small marker on the sleeve in the crate.
 - Opt-in shared listening sessions: follow another visitor's record and track.
 - More rotating multiplayer games alongside Hot Potato (the weekly game schedule in `shared/gameModes.ts` is already in place).
 
 **Content**
+
 - Richer case-study tracks for each project (concept, production, technical details, final mix) with images, video and code samples.
 - New records as work lands; each one is a data entry.
-- A working contact form backend (the current server action is a stub).
 
 **Polish**
+
 - Finer textures and animation tuning; testing on Safari, Firefox and real devices.
 - Lazy-loading heavier track media.
 - Removing the now-unused original home-page components and deciding whether the original `/projects`, `/experience` and `/contact` routes should redirect into their records.

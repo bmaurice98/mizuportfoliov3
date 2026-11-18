@@ -43,6 +43,14 @@ export const HotPotatoGame = __t.object("HotPotatoGame", {
 });
 export type HotPotatoGame = __Infer<typeof HotPotatoGame>;
 
+export const Listener = __t.object("Listener", {
+  identity: __t.identity(),
+  record: __t.string(),
+  track: __t.u32(),
+  updatedAt: __t.timestamp(),
+});
+export type Listener = __Infer<typeof Listener>;
+
 export const LobbyJob = __t.object("LobbyJob", {
   scheduledId: __t.u64(),
   scheduledAt: __t.scheduleAt(),

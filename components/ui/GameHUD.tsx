@@ -7,6 +7,7 @@ import { playExplosion, playWinChime } from "../gameAudio";
 import { storeName } from "../nameStorage";
 import { validateName } from "../nameValidation";
 import { useBotCursorsEnabled, setBotCursorsEnabled } from "../botSettings";
+import { setShareListening, useShareListening } from "@/shared/presence";
 
 const DEFAULT_DURATION = 30;
 const LOSER_BANNER_MS = 5000;
@@ -44,6 +45,7 @@ export function GameHUD() {
   const isLobby = game?.status === "lobby";
   const canStart = !isActive && !isLobby && cursors.length >= 2;
   const botsEnabled = useBotCursorsEnabled();
+  const shareListening = useShareListening();
 
   useEffect(() => {
     const prev = prevLobbyStatusRef.current;
@@ -200,6 +202,13 @@ export function GameHUD() {
               className="w-full cursor-pointer rounded-lg bg-neutral-800 px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-neutral-700"
             >
               🤖 Simulated visitors: {botsEnabled ? "On" : "Off"}
+            </button>
+            <button
+              onClick={() => setShareListening(!shareListening)}
+              aria-pressed={shareListening}
+              className="w-full cursor-pointer rounded-lg bg-neutral-800 px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-neutral-700"
+            >
+              💿 Share what I&apos;m playing: {shareListening ? "On" : "Off"}
             </button>
             <div className="my-1 h-px bg-neutral-700" />
 

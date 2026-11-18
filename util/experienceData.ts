@@ -1,4 +1,14 @@
-import type { DetailContent } from "@/components/ui/expandableModal";
+export type DetailSection = {
+  heading: string;
+  list?: string[];
+  chips?: string[];
+};
+
+export type DetailContent = {
+  overview: string;
+  sections: DetailSection[];
+  technologies: string[];
+};
 
 // ✏️ The `detail` blocks are placeholder copy built from what's already on your
 // site. Edit them so they only claim what's true.

@@ -31,6 +31,9 @@ export type ThemeId =
   | "session"
   | "technical"
   | "bsides"
+  | "devlog"
+  | "rotation"
+  | "darkroom"
   | "contact";
 
 const SERIF = "var(--font-rs-serif), Georgia, serif";
@@ -117,6 +120,45 @@ export const THEMES: Record<ThemeId, ThemeTokens> = {
     deckEdge: "#05080a",
     fontDisplay: SYNE,
     fontBody: GROTESK,
+  },
+  // Notebook: lined paper, fountain-pen blue, red margin.
+  devlog: {
+    bg: "#f3efe3",
+    surface: "#e8e2d0",
+    text: "#1b2a4a",
+    muted: "#4f5d7a",
+    accent: "#b8323f",
+    accent2: "#1d3c78",
+    deck: "#b9ad94",
+    deckEdge: "#7d715a",
+    fontDisplay: SERIF,
+    fontBody: MONO,
+  },
+  // Late-night radio: indigo, violet and a warm dial-light yellow.
+  rotation: {
+    bg: "#100c1f",
+    surface: "#1b1533",
+    text: "#efe9ff",
+    muted: "#a69cc9",
+    accent: "#f7c548",
+    accent2: "#7b5cff",
+    deck: "#2a2148",
+    deckEdge: "#120d22",
+    fontDisplay: GROTESK,
+    fontBody: GROTESK,
+  },
+  // Darkroom: near-black under a red safelight.
+  darkroom: {
+    bg: "#110b0a",
+    surface: "#1d1412",
+    text: "#f5ebe4",
+    muted: "#b9a59c",
+    accent: "#ef5350",
+    accent2: "#7a1f1d",
+    deck: "#2a1c19",
+    deckEdge: "#0b0706",
+    fontDisplay: SERIF,
+    fontBody: INTER,
   },
   // Minimal: black, white, one restrained accent.
   contact: {

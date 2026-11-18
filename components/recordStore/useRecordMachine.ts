@@ -41,6 +41,7 @@ export type MachineEvent =
   | { type: "SKIP" }
   | { type: "RETURN"; instant?: boolean }
   | { type: "RESTORE"; id: string }
+  | { type: "SWITCH"; id: string }
   | { type: "SET_TRACK"; index: number };
 
 const NEXT: Partial<Record<Phase, Phase>> = {
@@ -114,6 +115,17 @@ export function machineReducer(
         return { phase: "browsing", selection: null, instant: true };
       }
       return { ...state, phase: "returning", instant: false };
+
+    case "SWITCH":
+      // Change records while one is already playing (follow mode, Back/Forward
+      // between records). The room swaps in place; no crate trip.
+      if (state.phase !== "listening" && state.phase !== "playing") return state;
+      if (state.selection?.id === event.id) return state;
+      return {
+        phase: "listening",
+        selection: { id: event.id, currentTrack: 0 },
+        instant: false,
+      };
 
     case "SET_TRACK":
       if (!state.selection || state.selection.currentTrack === event.index)

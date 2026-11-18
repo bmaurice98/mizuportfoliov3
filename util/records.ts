@@ -13,6 +13,8 @@ import {
   type TimelineEntry,
 } from "@/util/experienceData";
 import type { ThemeId } from "@/components/recordStore/themes";
+import { ROLLS, type Photo } from "@/util/gallery";
+import { DEVLOG, type DevLogEntry } from "@/util/devlog";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -25,6 +27,11 @@ export type Project = {
   link?: string;
   github?: string;
   image?: string;
+  /**
+   * Optional case study, rendered after the project summary. Suggested
+   * sections: The Concept · Production · Technical Details · Final Mix.
+   */
+  caseStudy?: { title: string; blocks: Block[] }[];
 };
 
 export type LinkItem = {
@@ -48,9 +55,16 @@ export type Block =
   | { type: "project"; project: Project }
   | { type: "credit"; entry: TimelineEntry }
   | { type: "links"; items: LinkItem[] }
-  | { type: "widget"; widget: WidgetId };
+  | { type: "image"; src: string; alt: string; width: number; height: number; caption?: string }
+  | { type: "video"; src: string; title: string; poster?: string; caption?: string }
+  | { type: "code"; code: string; lang?: string; caption?: string }
+  | { type: "quote"; text: string; cite?: string }
+  | { type: "photos"; photos: Photo[]; empty?: string }
+  | { type: "log"; entry: DevLogEntry }
+  | { type: "widget"; widget: WidgetId; view?: ListeningView };
 
-export type WidgetId = "theme-console" | "contact-form" | "games";
+export type WidgetId = "theme-console" | "games" | "listening";
+export type ListeningView = "now-playing" | "top-artists" | "top-albums" | "top-tracks" | "stats";
 
 export type Track = {
   id: string;
@@ -65,7 +79,10 @@ export type SleeveArt =
   | { kind: "rings" }
   | { kind: "schematic" }
   | { kind: "riso" }
-  | { kind: "type" };
+  | { kind: "type" }
+  | { kind: "contact-sheet" }
+  | { kind: "notebook" }
+  | { kind: "bars" };
 
 export type RecordDef = {
   id: string;
@@ -89,6 +106,7 @@ export type RecordDef = {
 /* ------------------------------------------------------------------ */
 
 type RawProject = {
+  caseStudy?: Project["caseStudy"];
   projectTitle: string;
   projectDescription: string;
   projectTags: string[];
@@ -106,6 +124,7 @@ const PROJECTS: Project[] = Object.values(
   link: p.projectLink,
   github: p.githubLink,
   image: p.projectImageUrl,
+  caseStudy: p.caseStudy,
 }));
 
 const slug = (s: string) =>
@@ -133,6 +152,17 @@ function blockWords(b: Block): string {
       return b.items.map((i) => i.label).join(" ");
     case "stat":
       return b.label;
+    case "quote":
+      return b.text;
+    case "code":
+      return b.code;
+    case "image":
+    case "video":
+      return b.caption ?? "x ".repeat(30);
+    case "photos":
+      return "x ".repeat(20 * Math.max(1, b.photos.length));
+    case "log":
+      return `${b.entry.title} ${b.entry.body.join(" ")}`;
     case "widget":
       return "x ".repeat(90); // interactive pieces "play" for a while
   }
@@ -188,6 +218,24 @@ const CONTACT_LINKS: LinkItem[] = [
     icon: "headphones",
   },
 ];
+
+/** Group dev log entries (newest first) into one track per month. */
+function devlogTracks(entries: DevLogEntry[]): Track[] {
+  const months = new Map<string, DevLogEntry[]>();
+  for (const e of [...entries].sort((a, b) => b.date.localeCompare(a.date))) {
+    const key = e.date.slice(0, 7);
+    months.set(key, [...(months.get(key) ?? []), e]);
+  }
+  return [...months].map(([key, list]) => ({
+    id: `log-${key}`,
+    title: new Date(`${key}-01T00:00:00Z`).toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }),
+    blocks: list.map<Block>((entry) => ({ type: "log", entry })),
+  }));
+}
 
 /* ------------------------------------------------------------------ */
 /* The collection                                                      */
@@ -288,7 +336,13 @@ export const RECORDS: RecordDef[] = [
     tracks: PROJECTS.map((project) => ({
       id: slug(project.title),
       title: project.title,
-      blocks: [{ type: "project", project }],
+      blocks: [
+        { type: "project", project },
+        ...(project.caseStudy ?? []).flatMap<Block>((section) => [
+          { type: "heading", text: section.title },
+          ...section.blocks,
+        ]),
+      ],
     })),
   },
   {
@@ -424,6 +478,100 @@ export const RECORDS: RecordDef[] = [
     ],
   },
   {
+    id: "dev-log",
+    title: "Dev Log",
+    artist: ARTIST,
+    catalog: "DMZ-007",
+    year: "Ongoing",
+    divider: "Studio",
+    format: "LP",
+    description: "Liner notes from the workbench: what changed on this site and why.",
+    theme: "devlog",
+    art: { kind: "notebook" },
+    palette: {
+      paper: "#f3efe3",
+      ink: "#1d3c78",
+      accent: "#d1495b",
+      accent2: "#9fb7d9",
+    },
+    tracks: devlogTracks(DEVLOG),
+  },
+  {
+    id: "heavy-rotation",
+    title: "Heavy Rotation",
+    artist: ARTIST,
+    catalog: "DMZ-008",
+    year: "Live",
+    divider: "Off The Clock",
+    format: "LP",
+    description: "What's actually on my headphones: favourite artists, albums and songs.",
+    theme: "rotation",
+    art: { kind: "bars" },
+    palette: {
+      paper: "#15102a",
+      ink: "#efe9ff",
+      accent: "#f7c548",
+      accent2: "#7b5cff",
+    },
+    tracks: [
+      {
+        id: "now-playing",
+        title: "Now Playing",
+        blocks: [{ type: "widget", widget: "listening", view: "now-playing" }],
+      },
+      {
+        id: "top-artists",
+        title: "Top Artists",
+        blocks: [{ type: "widget", widget: "listening", view: "top-artists" }],
+      },
+      {
+        id: "top-albums",
+        title: "Top Albums",
+        blocks: [{ type: "widget", widget: "listening", view: "top-albums" }],
+      },
+      {
+        id: "top-tracks",
+        title: "Top Songs",
+        blocks: [{ type: "widget", widget: "listening", view: "top-tracks" }],
+      },
+      {
+        id: "stats",
+        title: "By The Numbers",
+        blocks: [{ type: "widget", widget: "listening", view: "stats" }],
+      },
+    ],
+  },
+  {
+    id: "photo-gallery",
+    title: "Photo Gallery",
+    artist: ARTIST,
+    catalog: "DMZ-009",
+    year: "Prints",
+    divider: "Off The Clock",
+    format: "12″",
+    description: "Contact sheets from behind the camera.",
+    theme: "darkroom",
+    art: { kind: "contact-sheet" },
+    palette: {
+      paper: "#141110",
+      ink: "#f5ebe4",
+      accent: "#e5383b",
+      accent2: "#efe3d3",
+    },
+    tracks: ROLLS.map((roll) => ({
+      id: roll.id,
+      title: roll.date ? `${roll.title} · ${roll.date}` : roll.title,
+      blocks: [
+        ...(roll.note ? [{ type: "text", text: roll.note } as Block] : []),
+        {
+          type: "photos",
+          photos: roll.photos,
+          empty: "No prints on this roll yet.",
+        },
+      ],
+    })),
+  },
+  {
     id: "contact",
     title: "Contact",
     artist: ARTIST,
@@ -447,15 +595,10 @@ export const RECORDS: RecordDef[] = [
         blocks: [
           {
             type: "text",
-            text: "Open a channel for inquiries, collaborations, or technical consultations. Operating from PST-5; responses typically within 24 hours.",
+            text: "Open a channel for inquiries, collaborations, or technical consultations. Email is the fastest way to reach me. Operating from PST-5; responses typically within 24 hours.",
           },
           { type: "links", items: CONTACT_LINKS },
         ],
-      },
-      {
-        id: "message",
-        title: "Send A Message",
-        blocks: [{ type: "widget", widget: "contact-form" }],
       },
     ],
   },

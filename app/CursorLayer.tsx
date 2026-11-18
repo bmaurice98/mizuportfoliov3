@@ -7,6 +7,7 @@ import { useTable, useReducer, useSpacetimeDB } from "spacetimedb/react";
 
 import { useBotCursors } from "@/components/useBotCursors";
 import { useBotCursorsEnabled } from "@/components/botSettings";
+import { roomFor, usePresence } from "@/shared/presence";
 
 const MIN_VISIBLE_CURSORS = 5; // total cursors you want on screen (including you)
 const IDLE_MS = 5_000;
@@ -17,7 +18,11 @@ export function CursorLayer() {
   const updateCursor = useReducer(reducers.updateCursor);
   const [readyPlayers] = useTable(tables.readyPlayer);
   const pathname = usePathname();
+  // Cursors are shared per *room*: the page, plus the record on the turntable.
+  const { record } = usePresence();
+  const room = roomFor(pathname, record);
   const lastSent = useRef(0);
+  const lastPos = useRef<{ x: number; y: number } | null>(null);
   const [games] = useTable(tables.hotPotatoGame);
   const game = games[0];
 
@@ -41,7 +46,7 @@ export function CursorLayer() {
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [pathname]); // re-measure on route change since content differs per page
+  }, [room]); // re-measure on room change since content differs per room
 
   // Track this viewer's own viewport size so we can convert
   // received fractions back into real pixel positions on THIS screen.
@@ -66,11 +71,19 @@ export function CursorLayer() {
       // pageX/pageY already include scroll offset, unlike clientX/clientY.
       const normX = Math.min(1, Math.max(0, e.pageX / docW));
       const normY = Math.min(1, Math.max(0, e.pageY / docH));
-      updateCursor({ x: normX, y: normY, page: pathname });
+      lastPos.current = { x: normX, y: normY };
+      updateCursor({ x: normX, y: normY, page: room });
     }
     window.addEventListener("mousemove", handleMove);
     return () => window.removeEventListener("mousemove", handleMove);
-  }, [pathname, updateCursor]);
+  }, [room, updateCursor]);
+
+  // Changing rooms without moving the mouse (keyboard, touch) still moves
+  // this visitor's cursor row into the new room.
+  useEffect(() => {
+    if (!conn?.isActive || !lastPos.current) return;
+    updateCursor({ ...lastPos.current, page: room }).catch(() => {});
+  }, [room, conn?.isActive, updateCursor]);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -108,7 +121,7 @@ export function CursorLayer() {
       ? Math.max(0, MIN_VISIBLE_CURSORS - 1 - othersActive) // -1 for yourself
       : 0;
 
-  const { bots, register } = useBotCursors(botCount, pathname);
+  const { bots, register } = useBotCursors(botCount, room);
 
   if (!isReady || !conn || docSize.w === 0) return null;
 
@@ -120,7 +133,7 @@ export function CursorLayer() {
     >
       {cursors
         .filter((c) => {
-          if (c.page !== pathname || c.identity.toHexString() === myIdentity)
+          if (c.page !== room || c.identity.toHexString() === myIdentity)
             return false;
           const updatedMs = Number(c.updatedAt.microsSinceUnixEpoch) / 1000;
           return now - updatedMs < IDLE_MS;
