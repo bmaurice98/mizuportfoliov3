@@ -704,6 +704,9 @@
   container-type: inline-size;
   box-shadow: 0 1.6cqw 4cqw rgba(0, 0, 0, 0.55);
 }
+.rs-vinyl-hand { position: absolute; inset: 0; border-radius: 50%; }
+.rs-vinyl[data-spinnable] { cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
+.rs-vinyl[data-spinnable]:active { cursor: grabbing; }
 .rs-vinyl-disc {
   position: absolute;
   inset: 0;
