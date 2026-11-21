@@ -195,7 +195,7 @@ export function ListeningRoom({
             onToggle={live ? () => setPaused((p) => !p) : undefined}
           >
             <div className="rs-room-vinyl" ref={vinylRef}>
-              <VinylDisc record={record} spinning={spinning} side={side} />
+              <VinylDisc record={record} spinning={spinning} side={side} spinnable={live} />
             </div>
           </Turntable>
         </div>
